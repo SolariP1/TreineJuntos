@@ -7,7 +7,7 @@ enum Fixtures {
     static func partner(
         name: String = "Marina",
         age: Int = 27,
-        sport: String = "Corrida",
+        sport: Sport = .corrida,
         distance: String = "450m",
         gradientIndex: Int = 0
     ) -> WorkoutPartner {

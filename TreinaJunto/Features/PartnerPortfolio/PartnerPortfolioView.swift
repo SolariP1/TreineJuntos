@@ -10,7 +10,7 @@ struct PartnerPortfolioView: View {
     @State private var selectedDay: Int?
 
     private var style: SportStyle {
-        Playful.style(for: portfolio.partner.sport)
+        portfolio.partner.sport.style
     }
 
     var body: some View {
@@ -98,7 +98,7 @@ struct PartnerPortfolioView: View {
                         .foregroundStyle(.white)
 
                     HStack(spacing: 6) {
-                        badge(symbol: style.symbol, text: portfolio.partner.sport)
+                        badge(symbol: style.symbol, text: portfolio.partner.sport.label)
                         badge(symbol: "location.fill", text: portfolio.partner.distance)
                     }
 
@@ -161,7 +161,7 @@ struct PartnerPortfolioView: View {
                 suffix: "",
                 label: "dias seguidos",
                 symbol: "flame.fill",
-                color: Playful.style(for: "Corrida").base,
+                color: Palette.orange.base,
                 pulses: true
             )
             statTile(
@@ -169,7 +169,7 @@ struct PartnerPortfolioView: View {
                 suffix: "",
                 label: "treinos",
                 symbol: "figure.run.circle.fill",
-                color: Playful.style(for: "Musculação").base,
+                color: Palette.violet.base,
                 pulses: false
             )
             statTile(
@@ -177,7 +177,7 @@ struct PartnerPortfolioView: View {
                 suffix: "%",
                 label: "confiável",
                 symbol: "checkmark.seal.fill",
-                color: Playful.style(for: "Funcional").base,
+                color: Palette.mint.base,
                 pulses: false
             )
         }
@@ -224,19 +224,23 @@ struct PartnerPortfolioView: View {
 
     // MARK: - Badges
 
-    private var badges: [(String, String, SportStyle)] {
-        var earned: [(String, String, SportStyle)] = []
+    private var badges: [Badge] {
+        var earned: [Badge] = []
         if portfolio.streak >= 5 {
-            earned.append(("flame.fill", "Sequência de \(portfolio.streak)", Playful.style(for: "Corrida")))
+            earned.append(Badge(
+                symbol: "flame.fill",
+                label: "Sequência de \(portfolio.streak)",
+                ramp: Palette.orange
+            ))
         }
         if portfolio.reliability >= 70 {
-            earned.append(("checkmark.seal.fill", "Sempre aparece", Playful.style(for: "Funcional")))
+            earned.append(Badge(symbol: "checkmark.seal.fill", label: "Sempre aparece", ramp: Palette.mint))
         }
         if portfolio.totalTrainings >= 20 {
-            earned.append(("medal.fill", "Veterano", Playful.style(for: "Ciclismo")))
+            earned.append(Badge(symbol: "medal.fill", label: "Veterano", ramp: Palette.amber))
         }
-        earned.append(("sunrise.fill", "Madrugador", Playful.style(for: "Yoga")))
-        earned.append(("heart.fill", "Companheiro fiel", Playful.style(for: "Musculação")))
+        earned.append(Badge(symbol: "sunrise.fill", label: "Madrugador", ramp: Palette.pink))
+        earned.append(Badge(symbol: "heart.fill", label: "Companheiro fiel", ramp: Palette.violet))
         return earned
     }
 
@@ -245,16 +249,16 @@ struct PartnerPortfolioView: View {
             HStack(spacing: 8) {
                 ForEach(Array(badges.enumerated()), id: \.offset) { index, badge in
                     HStack(spacing: 6) {
-                        Image(systemName: badge.0)
+                        Image(systemName: badge.symbol)
                             .font(.system(size: 12))
-                            .foregroundStyle(badge.2.base)
-                        Text(badge.1)
+                            .foregroundStyle(badge.ramp.base)
+                        Text(badge.label)
                             .font(.brand(11.5, weight: .bold))
-                            .foregroundStyle(badge.2.deep)
+                            .foregroundStyle(badge.ramp.deep)
                     }
                     .padding(.horizontal, 12).padding(.vertical, 9)
-                    .background(badge.2.soft, in: Capsule())
-                    .overlay(Capsule().stroke(badge.2.base.opacity(0.25), lineWidth: 1))
+                    .background(badge.ramp.soft, in: Capsule())
+                    .overlay(Capsule().stroke(badge.ramp.base.opacity(0.25), lineWidth: 1))
                     .rotationEffect(.degrees(index % 2 == 0 ? -1.5 : 1.5))
                     .scaleEffect(appeared ? 1 : 0.7)
                     .opacity(appeared ? 1 : 0)
@@ -407,9 +411,9 @@ struct PartnerPortfolioView: View {
                         HStack(spacing: 8) {
                             Text(day.day.prefix(3).uppercased())
                                 .font(.mono(9.5, weight: .bold))
-                                .foregroundStyle(Playful.style(for: "Musculação").deep)
+                                .foregroundStyle(Palette.violet.deep)
                                 .padding(.horizontal, 7).padding(.vertical, 4)
-                                .background(Playful.style(for: "Musculação").soft, in: Capsule())
+                                .background(Palette.violet.soft, in: Capsule())
                             Text(day.focus)
                                 .font(.brand(12.5, weight: .bold))
                                 .foregroundStyle(Playful.ink)
@@ -469,9 +473,9 @@ struct PartnerPortfolioView: View {
                     Image(systemName: "star.fill").font(.system(size: 11))
                     Text(portfolio.rating).font(.mono(12, weight: .bold))
                 }
-                .foregroundStyle(Playful.style(for: "Ciclismo").deep)
+                .foregroundStyle(Palette.amber.deep)
                 .padding(.horizontal, 9).padding(.vertical, 5)
-                .background(Playful.style(for: "Ciclismo").soft, in: Capsule())
+                .background(Palette.amber.soft, in: Capsule())
             }
 
             VStack(spacing: 10) {
@@ -492,7 +496,7 @@ struct PartnerPortfolioView: View {
                                     ForEach(0 ..< 5, id: \.self) { index in
                                         Image(systemName: index < review.rating ? "star.fill" : "star")
                                             .font(.system(size: 8))
-                                            .foregroundStyle(Playful.style(for: "Ciclismo").base)
+                                            .foregroundStyle(Palette.amber.base)
                                     }
                                 }
                             }
