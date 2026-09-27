@@ -14,6 +14,10 @@ struct UserProfile: Hashable, Sendable {
     var photos: [Data]
     var weeklySplit: [WorkoutDay]
     var reviews: [Review]
+
+    var initials: String {
+        String(name.prefix(1))
+    }
 }
 
 /// Etiquetas de preferência que a pessoa marca no perfil.

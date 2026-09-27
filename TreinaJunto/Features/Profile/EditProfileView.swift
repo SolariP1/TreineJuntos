@@ -2,30 +2,26 @@ import PhotosUI
 import SwiftUI
 
 struct EditProfileView: View {
-    @Binding var profile: UserProfile
+    /// Entregue ao fechar com "Salvar". Quem grava é o ViewModel.
+    var onSave: (UserProfile) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var draft: UserProfile
-    @State private var heroPickerItem: PhotosPickerItem?
-    @State private var morePickerItems: [PhotosPickerItem] = []
-    @State private var isLoadingHero = false
-    @State private var isLoadingMore = false
     @FocusState private var focusedField: Field?
 
     private enum Field { case name, city, bio }
     private let bioLimit = 160
 
-    init(profile: Binding<UserProfile>) {
-        _profile = profile
-        _draft = State(initialValue: profile.wrappedValue)
+    init(profile: UserProfile, onSave: @escaping (UserProfile) -> Void) {
+        self.onSave = onSave
+        _draft = State(initialValue: profile)
     }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 30) {
-                    heroPhoto
-                    thumbnailStrip
+                    ProfilePhotoEditor(photos: $draft.photos)
 
                     VStack(alignment: .leading, spacing: 18) {
                         underlineField(
@@ -45,7 +41,7 @@ struct EditProfileView: View {
                     bioEditor
 
                     VStack(alignment: .leading, spacing: 10) {
-                        eyebrow("Esportes")
+                        FieldLabel("Esportes")
                         FlowLayout(spacing: 8) {
                             ForEach(Sport.allCases, id: \.self) { sport in
                                 ToggleChip(label: sport.label, isOn: draft.sports.contains(sport)) {
@@ -56,7 +52,7 @@ struct EditProfileView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 10) {
-                        eyebrow("Interesses para treino")
+                        FieldLabel("Interesses para treino")
                         FlowLayout(spacing: 8) {
                             ForEach(availableInterests, id: \.self) { interest in
                                 ToggleChip(
@@ -84,7 +80,7 @@ struct EditProfileView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Salvar") {
-                        profile = draft
+                        onSave(draft)
                         dismiss()
                     }
                     .font(.brand(15, weight: .bold))
@@ -95,167 +91,6 @@ struct EditProfileView: View {
                     Button("Pronto") { focusedField = nil }
                         .font(.brand(14, weight: .semibold))
                 }
-            }
-        }
-    }
-
-    // MARK: - Hero photo
-
-    private var heroPhoto: some View {
-        PhotosPicker(selection: $heroPickerItem, matching: .images) {
-            ZStack(alignment: .bottomTrailing) {
-                Group {
-                    if let hero = draft.photos.first, let uiImage = UIImage(data: hero) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .scaledToFill()
-                    } else {
-                        LinearGradient(
-                            colors: [Theme.accent, Color(red: 0.788, green: 0.239, blue: 0.071)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                        .overlay(
-                            Image(systemName: "person.fill")
-                                .font(.system(size: 64))
-                                .foregroundStyle(.white.opacity(0.55))
-                        )
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 300)
-                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-
-                if isLoadingHero {
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(.black.opacity(0.25))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 300)
-                        .overlay(ProgressView().tint(.white))
-                }
-
-                HStack(spacing: 6) {
-                    Image(systemName: "camera.fill")
-                        .font(.system(size: 12, weight: .semibold))
-                    Text(draft.photos.isEmpty ? "Adicionar foto principal" : "Trocar foto")
-                        .font(.brand(12, weight: .bold))
-                }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 12).padding(.vertical, 9)
-                .background(.black.opacity(0.45), in: Capsule())
-                .padding(14)
-            }
-        }
-        .buttonStyle(.pressable)
-        .shadow(color: Theme.accent.opacity(0.18), radius: 26, y: 14)
-        .onChange(of: heroPickerItem) { _, newItem in
-            guard let newItem else { return }
-            isLoadingHero = true
-            Task {
-                let data = try? await newItem.loadTransferable(type: Data.self)
-                await MainActor.run {
-                    if let data {
-                        if draft.photos.isEmpty {
-                            draft.photos.append(data)
-                        } else {
-                            draft.photos[0] = data
-                        }
-                    }
-                    isLoadingHero = false
-                    heroPickerItem = nil
-                }
-            }
-        }
-    }
-
-    // MARK: - Thumbnail strip (extra photos)
-
-    private var thumbnailStrip: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                eyebrow("Mais fotos")
-                Spacer()
-                Text("\(draft.photos.count)/6")
-                    .font(.mono(10.5, weight: .medium))
-                    .foregroundStyle(Theme.inkFaint)
-            }
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(Array(draft.photos.dropFirst().enumerated()), id: \.offset) { offset, data in
-                        thumbnailTile(data: data, removeAt: offset + 1)
-                    }
-
-                    if draft.photos.count < 6 {
-                        PhotosPicker(
-                            selection: $morePickerItems,
-                            maxSelectionCount: 6 - draft.photos.count,
-                            matching: .images
-                        ) {
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .strokeBorder(
-                                    Theme.cardBorder,
-                                    style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])
-                                )
-                                .frame(width: 68, height: 88)
-                                .overlay(
-                                    Group {
-                                        if isLoadingMore {
-                                            ProgressView()
-                                        } else {
-                                            Image(systemName: "plus")
-                                                .font(.system(size: 15, weight: .semibold))
-                                        }
-                                    }
-                                    .foregroundStyle(Theme.inkMuted)
-                                )
-                        }
-                        .buttonStyle(.pressable)
-                    }
-                }
-            }
-        }
-        .onChange(of: morePickerItems) { _, newItems in
-            guard !newItems.isEmpty else { return }
-            isLoadingMore = true
-            Task {
-                var newData: [Data] = []
-                for item in newItems {
-                    if let data = try? await item.loadTransferable(type: Data.self) {
-                        newData.append(data)
-                    }
-                }
-                await MainActor.run {
-                    draft.photos.append(contentsOf: newData)
-                    if draft.photos.count > 6 {
-                        draft.photos = Array(draft.photos.prefix(6))
-                    }
-                    morePickerItems = []
-                    isLoadingMore = false
-                }
-            }
-        }
-    }
-
-    private func thumbnailTile(data: Data, removeAt index: Int) -> some View {
-        ZStack(alignment: .topTrailing) {
-            Group {
-                if let uiImage = UIImage(data: data) {
-                    Image(uiImage: uiImage).resizable().scaledToFill()
-                } else {
-                    Rectangle().fill(Theme.accentSoft)
-                }
-            }
-            .frame(width: 68, height: 88)
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-
-            Button {
-                draft.photos.remove(at: index)
-            } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 15))
-                    .foregroundStyle(.white, .black.opacity(0.55))
-                    .padding(8)
-                    .contentShape(Rectangle())
             }
         }
     }
@@ -285,7 +120,7 @@ struct EditProfileView: View {
     private var bioEditor: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                eyebrow("Bio")
+                FieldLabel("Bio")
                 Spacer()
                 Text("\(draft.bio.count)/\(bioLimit)")
                     .font(.mono(10.5, weight: .medium))
@@ -311,13 +146,6 @@ struct EditProfileView: View {
     }
 
     // MARK: - Helpers
-
-    private func eyebrow(_ text: String) -> some View {
-        Text(text.uppercased())
-            .font(.brand(10.5, weight: .bold))
-            .tracking(1.0)
-            .foregroundStyle(Theme.inkFaint)
-    }
 
     private func toggle<T: Equatable>(_ value: T, in array: inout [T]) {
         if let idx = array.firstIndex(of: value) {
@@ -354,5 +182,5 @@ private struct ToggleChip: View {
 }
 
 #Preview {
-    EditProfileView(profile: .constant(SampleData.profile))
+    EditProfileView(profile: SampleData.profile) { _ in }
 }
