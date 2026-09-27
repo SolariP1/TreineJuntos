@@ -1,16 +1,18 @@
 import SwiftUI
 
 struct PartnerPortfolioView: View {
-    let portfolio: PartnerPortfolio
+    let partner: WorkoutPartner
     var onInvite: () -> Void
 
+    @Environment(\.dependencies) private var dependencies
     @Environment(\.dismiss) private var dismiss
+
+    @State private var model: PartnerPortfolioViewModel?
     @State private var appeared = false
     @State private var statsRevealed = false
-    @State private var selectedDay: Int?
 
     private var style: SportStyle {
-        portfolio.partner.sport.style
+        partner.sport.style
     }
 
     var body: some View {
@@ -20,24 +22,50 @@ struct PartnerPortfolioView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     topBar
-                    hero.sectionEntrance(appeared, index: 0)
-                    statsStrip.sectionEntrance(appeared, index: 1)
-                    badgesStrip.sectionEntrance(appeared, index: 2)
-                    calendarCard.sectionEntrance(appeared, index: 3)
-                    if !portfolio.weeklySplit.isEmpty {
-                        routineCard.sectionEntrance(appeared, index: 4)
+
+                    // O topo desenha com o que o Feed já sabe da pessoa, então
+                    // a navegação nunca mostra uma tela em branco.
+                    PortfolioHeroCard(
+                        partner: partner,
+                        bio: model?.state.value?.bio ?? "",
+                        compatibility: model?.state.value?.compatibility ?? 0,
+                        style: style,
+                        statsRevealed: statsRevealed
+                    )
+                    .sectionEntrance(appeared, index: 0)
+
+                    switch model?.state {
+                    case let .loaded(portfolio):
+                        details(portfolio)
+
+                    case let .failed(message):
+                        Text(message)
+                            .font(.brand(13))
+                            .foregroundStyle(Playful.inkMuted)
+                            .multilineTextAlignment(.center)
+                            .padding(.top, 40)
+
+                    case .none, .idle, .loading:
+                        ProgressView()
+                            .controlSize(.large)
+                            .tint(style.base)
+                            .padding(.top, 40)
                     }
-                    interestsCard.sectionEntrance(appeared, index: 5)
-                    reviewsCard.sectionEntrance(appeared, index: 6)
                 }
                 .padding(.horizontal, 18)
                 .padding(.bottom, 24)
             }
         }
-        .safeAreaInset(edge: .bottom) { inviteBar }
+        .safeAreaInset(edge: .bottom) {
+            PortfolioInviteBar(partnerName: partner.name, style: style, onInvite: onInvite)
+        }
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
-        .onAppear {
+        .task {
+            if model == nil {
+                model = PartnerPortfolioViewModel(partner: partner, repository: dependencies.partners)
+            }
+            await model?.load()
             appeared = true
             withAnimation(.spring(response: 0.9, dampingFraction: 0.85).delay(0.3)) {
                 statsRevealed = true
@@ -45,193 +73,75 @@ struct PartnerPortfolioView: View {
         }
     }
 
-    // MARK: - Top bar
+    @ViewBuilder
+    private func details(_ portfolio: PartnerPortfolio) -> some View {
+        statsStrip(portfolio).sectionEntrance(appeared, index: 1)
+
+        BadgesStrip(badges: badges(for: portfolio), appeared: appeared)
+            .sectionEntrance(appeared, index: 2)
+
+        TrainingCalendarCard(
+            days: portfolio.days,
+            dayPartners: portfolio.dayPartners,
+            style: style,
+            appeared: appeared
+        )
+        .sectionEntrance(appeared, index: 3)
+
+        if !portfolio.weeklySplit.isEmpty {
+            routineCard(portfolio).sectionEntrance(appeared, index: 4)
+        }
+
+        PortfolioInterestsCard(interests: portfolio.interests, style: style)
+            .sectionEntrance(appeared, index: 5)
+
+        reviewsCard(portfolio).sectionEntrance(appeared, index: 6)
+    }
 
     private var topBar: some View {
         HStack {
-            circleButton("chevron.left") { dismiss() }
+            CircleIconButton(symbol: "chevron.left") { dismiss() }
             Spacer()
-            circleButton("square.and.arrow.up") {}
+            CircleIconButton(symbol: "square.and.arrow.up") {}
         }
         .padding(.top, 4)
     }
 
-    private func circleButton(_ symbol: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Playful.ink)
-                .frame(width: 44, height: 44)
-                .background(Playful.surface, in: Circle())
-                .shadow(color: .black.opacity(0.06), radius: 8, y: 4)
-        }
-        .buttonStyle(.pressable)
-    }
-
-    // MARK: - Hero
-
-    private var hero: some View {
-        ZStack {
-            // Ambient blobs drifting behind the content
-            FloatingBlob(color: .white.opacity(0.18), size: 210, lobes: 6, speed: 11)
-                .offset(x: -110, y: -50)
-            FloatingBlob(color: .white.opacity(0.12), size: 150, lobes: 4, speed: 8)
-                .offset(x: 120, y: 60)
-
-            VStack(spacing: 14) {
-                ZStack {
-                    BlobShape(phase: 0.9, lobes: 6, amplitude: 0.07)
-                        .fill(.white.opacity(0.28))
-                        .frame(width: 116, height: 116)
-                    Circle()
-                        .fill(portfolio.partner.gradient)
-                        .frame(width: 96, height: 96)
-                        .overlay(Circle().stroke(.white.opacity(0.9), lineWidth: 4))
-                    Text(portfolio.partner.initials)
-                        .font(.display(34))
-                        .foregroundStyle(.white)
-                }
-
-                VStack(spacing: 6) {
-                    Text("\(portfolio.partner.name), \(portfolio.partner.age)")
-                        .font(.display(24, weight: .bold))
-                        .foregroundStyle(.white)
-
-                    HStack(spacing: 6) {
-                        badge(symbol: style.symbol, text: portfolio.partner.sport.label)
-                        badge(symbol: "location.fill", text: portfolio.partner.distanceLabel)
-                    }
-
-                    Text(portfolio.bio)
-                        .font(.brand(12.5))
-                        .foregroundStyle(.white.opacity(0.9))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 20)
-                        .padding(.top, 2)
-                }
-
-                compatibilityPill
-            }
-            .padding(.vertical, 26)
-        }
-        .frame(maxWidth: .infinity)
-        .background(
-            LinearGradient(
-                colors: [style.base, style.deep],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            ),
-            in: RoundedRectangle(cornerRadius: 34, style: .continuous)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 34, style: .continuous))
-        .shadow(color: style.base.opacity(0.35), radius: 24, y: 14)
-    }
-
-    private func badge(symbol: String, text: String) -> some View {
-        HStack(spacing: 4) {
-            Image(systemName: symbol).font(.system(size: 10, weight: .semibold))
-            Text(text).font(.brand(11, weight: .bold))
-        }
-        .foregroundStyle(.white)
-        .padding(.horizontal, 10).padding(.vertical, 6)
-        .background(.white.opacity(0.22), in: Capsule())
-    }
-
-    private var compatibilityPill: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "sparkles")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(style.deep)
-            Text("\(statsRevealed ? portfolio.compatibility : 0)% compatível com você")
-                .font(.brand(12.5, weight: .bold))
-                .foregroundStyle(style.deep)
-                .contentTransition(.numericText())
-        }
-        .padding(.horizontal, 14).padding(.vertical, 10)
-        .background(.white, in: Capsule())
-        .shadow(color: .black.opacity(0.12), radius: 10, y: 5)
-    }
-
-    // MARK: - Stats
-
-    private var statsStrip: some View {
+    private func statsStrip(_ portfolio: PartnerPortfolio) -> some View {
         HStack(spacing: 10) {
-            statTile(
+            StatTile(
                 value: statsRevealed ? portfolio.streak : 0,
-                suffix: "",
                 label: "dias seguidos",
                 symbol: "flame.fill",
                 color: Palette.orange.base,
                 pulses: true
             )
-            statTile(
+            StatTile(
                 value: statsRevealed ? portfolio.totalTrainings : 0,
-                suffix: "",
                 label: "treinos",
                 symbol: "figure.run.circle.fill",
-                color: Palette.violet.base,
-                pulses: false
+                color: Palette.violet.base
             )
-            statTile(
+            StatTile(
                 value: statsRevealed ? portfolio.reliability : 0,
                 suffix: "%",
                 label: "confiável",
                 symbol: "checkmark.seal.fill",
-                color: Palette.mint.base,
-                pulses: false
+                color: Palette.mint.base
             )
         }
     }
 
-    private func statTile(
-        value: Int,
-        suffix: String,
-        label: String,
-        symbol: String,
-        color: Color,
-        pulses: Bool
-    ) -> some View {
-        VStack(spacing: 6) {
-            Group {
-                if pulses {
-                    Image(systemName: symbol)
-                        .font(.system(size: 17))
-                        .foregroundStyle(color)
-                        .phaseAnimator([1.0, 1.18]) { content, scale in
-                            content.scaleEffect(scale)
-                        } animation: { _ in .easeInOut(duration: 0.9) }
-                } else {
-                    Image(systemName: symbol)
-                        .font(.system(size: 17))
-                        .foregroundStyle(color)
-                }
-            }
-
-            Text("\(value)\(suffix)")
-                .font(.mono(19, weight: .bold))
-                .foregroundStyle(Playful.ink)
-                .contentTransition(.numericText())
-
-            Text(label)
-                .font(.brand(10, weight: .medium))
-                .foregroundStyle(Playful.inkMuted)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
-        .playfulCard(Playful.surface, radius: 22, tint: color)
-    }
-
-    // MARK: - Badges
-
-    private var badges: [Badge] {
+    private func badges(for portfolio: PartnerPortfolio) -> [Badge] {
         var earned: [Badge] = []
         if portfolio.streak >= 5 {
-            earned.append(Badge(
-                symbol: "flame.fill",
-                label: "Sequência de \(portfolio.streak)",
-                ramp: Palette.orange
-            ))
+            earned.append(
+                Badge(
+                    symbol: "flame.fill",
+                    label: "Sequência de \(portfolio.streak)",
+                    ramp: Palette.orange
+                )
+            )
         }
         if portfolio.reliability >= 70 {
             earned.append(Badge(symbol: "checkmark.seal.fill", label: "Sempre aparece", ramp: Palette.mint))
@@ -244,343 +154,32 @@ struct PartnerPortfolioView: View {
         return earned
     }
 
-    private var badgesStrip: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(Array(badges.enumerated()), id: \.offset) { index, badge in
-                    HStack(spacing: 6) {
-                        Image(systemName: badge.symbol)
-                            .font(.system(size: 12))
-                            .foregroundStyle(badge.ramp.base)
-                        Text(badge.label)
-                            .font(.brand(11.5, weight: .bold))
-                            .foregroundStyle(badge.ramp.deep)
-                    }
-                    .padding(.horizontal, 12).padding(.vertical, 9)
-                    .background(badge.ramp.soft, in: Capsule())
-                    .overlay(Capsule().stroke(badge.ramp.base.opacity(0.25), lineWidth: 1))
-                    .rotationEffect(.degrees(index % 2 == 0 ? -1.5 : 1.5))
-                    .scaleEffect(appeared ? 1 : 0.7)
-                    .opacity(appeared ? 1 : 0)
-                    .animation(
-                        .spring(response: 0.45, dampingFraction: 0.6).delay(0.35 + Double(index) * 0.06),
-                        value: appeared
-                    )
-                }
-            }
-            .padding(.horizontal, 2)
-            .padding(.vertical, 4)
-        }
-    }
-
-    // MARK: - Calendar
-
-    private var calendarCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                sectionTitle("Histórico de treinos")
-                Spacer()
-                Text(monthName)
-                    .font(.brand(11.5, weight: .bold))
-                    .foregroundStyle(Playful.inkMuted)
-            }
-
-            HStack(spacing: 0) {
-                ForEach(["D", "S", "T", "Q", "Q", "S", "S"], id: \.self) { symbol in
-                    Text(symbol)
-                        .font(.brand(10, weight: .bold))
-                        .foregroundStyle(Playful.inkFaint)
-                        .frame(maxWidth: .infinity)
-                }
-            }
-
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 7), spacing: 8) {
-                ForEach(0 ..< leadingBlanks, id: \.self) { index in
-                    Color.clear.frame(height: 38).id("blank\(index)")
-                }
-                ForEach(1 ... daysInMonth, id: \.self) { day in
-                    dayCell(day)
-                }
-            }
-
-            legend
-        }
-        .padding(18)
-        .playfulCard(Playful.surface, tint: style.base)
-    }
-
-    private func dayCell(_ day: Int) -> some View {
-        let state = portfolio.days[day] ?? .idle
-        let isToday = day == todayNumber
-        let isSelected = selectedDay == day
-
-        return Button {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.65)) {
-                selectedDay = isSelected ? nil : day
-            }
-        } label: {
-            ZStack {
-                switch state {
-                case .trainedTogether:
-                    Circle().fill(style.base)
-                case .openedAlone:
-                    Circle()
-                        .strokeBorder(
-                            style.base.opacity(0.55),
-                            style: StrokeStyle(lineWidth: 1.6, dash: [3, 3])
-                        )
-                case .idle:
-                    Circle().fill(Playful.canvas)
-                }
-
-                Text("\(day)")
-                    .font(.mono(11, weight: state == .trainedTogether ? .bold : .medium))
-                    .foregroundStyle(dayTextColor(state))
-
-                if state == .trainedTogether, let initial = portfolio.dayPartners[day] {
-                    Text(initial)
-                        .font(.brand(7.5, weight: .bold))
-                        .foregroundStyle(style.deep)
-                        .frame(width: 14, height: 14)
-                        .background(.white, in: Circle())
-                        .offset(x: 12, y: -12)
-                }
-            }
-            .frame(height: 38)
-            .overlay(
-                Circle()
-                    .stroke(Playful.ink.opacity(isToday ? 0.5 : 0), lineWidth: 1.5)
-                    .padding(-3)
-            )
-            .scaleEffect(isSelected ? 1.16 : 1)
-            .scaleEffect(appeared ? 1 : 0.5)
-            .opacity(appeared ? 1 : 0)
-            .animation(
-                .spring(response: 0.45, dampingFraction: 0.7).delay(Double(day) * 0.012 + 0.2),
-                value: appeared
-            )
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func dayTextColor(_ state: TrainingDayState) -> Color {
-        switch state {
-        case .trainedTogether: .white
-        case .openedAlone: style.deep
-        case .idle: Playful.inkFaint
-        }
-    }
-
-    private var legend: some View {
-        HStack(spacing: 14) {
-            legendItem(fill: true, text: "Treinou junto")
-            legendItem(fill: false, text: "Abriu, sem parceiro")
-            HStack(spacing: 5) {
-                Circle().fill(Playful.canvas).frame(width: 11, height: 11)
-                Text("Sem treino").font(.brand(9.5, weight: .medium)).foregroundStyle(Playful.inkMuted)
-            }
-        }
-        .padding(.top, 2)
-    }
-
-    private func legendItem(fill: Bool, text: String) -> some View {
-        HStack(spacing: 5) {
-            Group {
-                if fill {
-                    Circle().fill(style.base)
-                } else {
-                    Circle().strokeBorder(
-                        style.base.opacity(0.55),
-                        style: StrokeStyle(lineWidth: 1.4, dash: [2.5, 2.5])
-                    )
-                }
-            }
-            .frame(width: 11, height: 11)
-            Text(text).font(.brand(9.5, weight: .medium)).foregroundStyle(Playful.inkMuted)
-        }
-    }
-
-    // MARK: - Routine
-
-    private var routineCard: some View {
+    private func routineCard(_ portfolio: PartnerPortfolio) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionTitle("Rotina de musculação")
-            VStack(spacing: 8) {
-                ForEach(portfolio.weeklySplit) { day in
-                    VStack(alignment: .leading, spacing: 7) {
-                        HStack(spacing: 8) {
-                            Text(day.day.prefix(3).uppercased())
-                                .font(.mono(9.5, weight: .bold))
-                                .foregroundStyle(Palette.violet.deep)
-                                .padding(.horizontal, 7).padding(.vertical, 4)
-                                .background(Palette.violet.soft, in: Capsule())
-                            Text(day.focus)
-                                .font(.brand(12.5, weight: .bold))
-                                .foregroundStyle(Playful.ink)
-                            Spacer()
-                        }
-                        FlowLayout(spacing: 6) {
-                            ForEach(day.exercises, id: \.self) { exercise in
-                                Text(exercise)
-                                    .font(.brand(10, weight: .medium))
-                                    .foregroundStyle(Playful.inkMuted)
-                                    .padding(.horizontal, 8).padding(.vertical, 4)
-                                    .background(Playful.canvas, in: Capsule())
-                            }
-                        }
-                    }
-                    .padding(12)
-                    .background(
-                        Playful.canvas.opacity(0.6),
-                        in: RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    )
-                }
-            }
+            SectionTitle("Rotina de musculação")
+            WeeklySplitList(days: portfolio.weeklySplit)
         }
         .padding(18)
         .playfulCard()
     }
 
-    // MARK: - Interests
-
-    private var interestsCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            sectionTitle("O que procura")
-            FlowLayout(spacing: 7) {
-                ForEach(portfolio.interests, id: \.self) { interest in
-                    HStack(spacing: 5) {
-                        Image(systemName: "sparkle").font(.system(size: 9))
-                        Text(interest).font(.brand(11.5, weight: .semibold))
-                    }
-                    .foregroundStyle(style.deep)
-                    .padding(.horizontal, 11).padding(.vertical, 7)
-                    .background(style.soft, in: Capsule())
-                }
-            }
-        }
-        .padding(18)
-        .playfulCard()
-    }
-
-    // MARK: - Reviews
-
-    private var reviewsCard: some View {
+    private func reviewsCard(_ portfolio: PartnerPortfolio) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                sectionTitle("Avaliações")
+                SectionTitle("Avaliações")
                 Spacer()
-                HStack(spacing: 4) {
-                    Image(systemName: "star.fill").font(.system(size: 11))
-                    Text(portfolio.rating).font(.mono(12, weight: .bold))
-                }
-                .foregroundStyle(Palette.amber.deep)
-                .padding(.horizontal, 9).padding(.vertical, 5)
-                .background(Palette.amber.soft, in: Capsule())
+                RatingPill(rating: portfolio.rating)
             }
 
-            VStack(spacing: 10) {
-                ForEach(portfolio.reviews) { review in
-                    HStack(alignment: .top, spacing: 10) {
-                        ZStack {
-                            Circle().fill(review.gradient)
-                            Text(review.initials).font(.display(12)).foregroundStyle(.white)
-                        }
-                        .frame(width: 34, height: 34)
-
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack(spacing: 6) {
-                                Text(review.reviewerName)
-                                    .font(.brand(12.5, weight: .bold))
-                                    .foregroundStyle(Playful.ink)
-                                HStack(spacing: 1.5) {
-                                    ForEach(0 ..< 5, id: \.self) { index in
-                                        Image(systemName: index < review.rating ? "star.fill" : "star")
-                                            .font(.system(size: 8))
-                                            .foregroundStyle(Palette.amber.base)
-                                    }
-                                }
-                            }
-                            Text(review.comment)
-                                .font(.brand(11.5))
-                                .foregroundStyle(Playful.inkMuted)
-                            Text(review.context)
-                                .font(.brand(9.5, weight: .medium))
-                                .foregroundStyle(Playful.inkFaint)
-                        }
-                        Spacer(minLength: 0)
-                    }
-                    .padding(12)
-                    .background(
-                        Playful.canvas.opacity(0.6),
-                        in: RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    )
-                }
-            }
+            ReviewsList(reviews: portfolio.reviews)
         }
         .padding(18)
         .playfulCard()
-    }
-
-    // MARK: - Invite bar
-
-    private var inviteBar: some View {
-        Button(action: onInvite) {
-            HStack(spacing: 8) {
-                Image(systemName: "hand.wave.fill").font(.system(size: 14, weight: .semibold))
-                Text("Convidar \(portfolio.partner.name) pra treinar")
-                    .font(.brand(15, weight: .bold))
-            }
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity, minHeight: 54)
-        }
-        .background(
-            LinearGradient(colors: [style.base, style.deep], startPoint: .leading, endPoint: .trailing),
-            in: RoundedRectangle(cornerRadius: 18, style: .continuous)
-        )
-        .shadow(color: style.base.opacity(0.4), radius: 16, y: 8)
-        .buttonStyle(.pressable)
-        .padding(.horizontal, 18)
-        .padding(.top, 10)
-        .padding(.bottom, 6)
-        .background(.ultraThinMaterial)
-    }
-
-    // MARK: - Helpers
-
-    private func sectionTitle(_ text: String) -> some View {
-        Text(text)
-            .font(.display(14, weight: .semibold))
-            .foregroundStyle(Playful.ink)
-    }
-
-    private var monthName: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "pt_BR")
-        formatter.dateFormat = "MMMM"
-        return formatter.string(from: Date()).capitalized
-    }
-
-    private var daysInMonth: Int {
-        Calendar.current.range(of: .day, in: .month, for: Date())?.count ?? 30
-    }
-
-    private var leadingBlanks: Int {
-        let calendar = Calendar.current
-        let components = calendar.dateComponents([.year, .month], from: Date())
-        guard let firstOfMonth = calendar.date(from: components) else { return 0 }
-        return calendar.component(.weekday, from: firstOfMonth) - 1
-    }
-
-    private var todayNumber: Int {
-        Calendar.current.component(.day, from: Date())
     }
 }
 
 #Preview {
     NavigationStack {
-        PartnerPortfolioView(
-            portfolio: SampleData.portfolio(for: SampleData.partners[0]),
-            onInvite: {}
-        )
+        PartnerPortfolioView(partner: SampleData.partners[0], onInvite: {})
     }
 }

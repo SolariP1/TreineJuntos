@@ -272,11 +272,12 @@ o tempo todo. Nenhuma fase é um "grande refactor".
 | 3 | `Domain` sem SwiftUI; `distanceInMeters`; `sample` sai do modelo | `v0.4.0` |
 | 4 | Protocolos de repositório + implementação em memória | `v0.5.0` |
 | 5 | `FeedViewModel`; quebrar `FeedView` | `v0.6.0` |
-| 6 | ViewModels de Profile e Portfolio; quebrar as Views de 500 linhas | `v0.7.0` |
+| 6a | ViewModel de Profile; quebrar `ProfileView` e `EditProfileView` | `v0.7.0` |
+| 6b | ViewModel de Portfolio; quebrar `PartnerPortfolioView` | `v0.7.0` |
 | 7 | `AppSession` + onboarding que coleta de verdade + SwiftData | `v0.8.0` |
 
-A cada fase que quebra uma View, a baseline do SwiftLint encolhe. Quando
-chegar a zero, ela é apagada e o `--strict` passa a valer sem rede de proteção.
+A cada fase que quebra uma View, a baseline do SwiftLint encolheu — 9, 6, 3,
+0. Na fase 6b ela foi apagada, e o `--strict` passou a valer sem rede.
 
 **A fase 1 é de graça e destrava todas as outras** — é só mover arquivo, com
 o XcodeGen regerando o projeto sozinho.

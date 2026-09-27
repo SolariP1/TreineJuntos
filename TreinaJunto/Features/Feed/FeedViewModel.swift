@@ -66,10 +66,6 @@ final class FeedViewModel {
         }
     }
 
-    func portfolio(for partner: WorkoutPartner) async -> PartnerPortfolio? {
-        try? await partnerRepository.portfolio(for: partner.id)
-    }
-
     func hasInvited(_ partner: WorkoutPartner) -> Bool {
         invitedIDs.contains(partner.id)
     }

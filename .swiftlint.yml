@@ -65,9 +65,6 @@ force_cast: error
 force_try: error
 force_unwrapping: error
 
-# Dívida técnica registrada em .swiftlint-baseline.json: as Views grandes que
-# existem hoje. A baseline não perdoa violação nova — ela só impede que o CI
-# fique vermelho por dívida antiga enquanto a arquitetura é reorganizada.
-# A baseline guarda o CAMINHO de cada violação, então ela invalida tanto ao
-# quebrar uma View quanto ao MOVER um arquivo. Nos dois casos, regenere:
-#   swiftlint lint --write-baseline .swiftlint-baseline.json
+# Sem baseline: a dívida das Views grandes foi paga na fase 6, então --strict
+# vale sem exceção. Se um dia voltar a ser preciso registrar dívida, lembre
+# que a baseline indexa por caminho e invalida ao mover arquivo.

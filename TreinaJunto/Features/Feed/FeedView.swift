@@ -5,7 +5,7 @@ struct FeedView: View {
 
     @State private var model: FeedViewModel?
     @State private var showAvailabilitySheet = false
-    @State private var selectedPortfolio: PartnerPortfolio?
+    @State private var selectedPartner: WorkoutPartner?
     @State private var appeared = false
 
     var body: some View {
@@ -24,10 +24,10 @@ struct FeedView: View {
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
-            .navigationDestination(item: $selectedPortfolio) { portfolio in
-                PartnerPortfolioView(portfolio: portfolio) {
-                    Task { await model?.invite(portfolio.partner) }
-                    selectedPortfolio = nil
+            .navigationDestination(item: $selectedPartner) { partner in
+                PartnerPortfolioView(partner: partner) {
+                    Task { await model?.invite(partner) }
+                    selectedPartner = nil
                 }
             }
         }
@@ -233,9 +233,7 @@ struct FeedView: View {
                         person: person,
                         isInvited: model.hasInvited(person),
                         onInvite: { Task { await model.invite(person) } },
-                        onOpenProfile: {
-                            Task { selectedPortfolio = await model.portfolio(for: person) }
-                        }
+                        onOpenProfile: { selectedPartner = person }
                     )
                     .scaleEffect(appeared ? 1 : 0.94)
                     .opacity(appeared ? 1 : 0)
