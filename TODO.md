@@ -1,40 +1,95 @@
-# TODO — TreinaJunto
+# Backlog — TreinaJunto
 
-## Perfil: academia e convites
+Atualizado em 27/09/2026 (v0.1.1).
 
-Ideia anotada em 23/09/2026. Nada disso está implementado ainda — hoje o
-`UserProfile` em `TreinaJunto/Models.swift` só tem `city`.
+Como ler: **Fundação** é o que precisa existir para o app ser um produto e não
+um protótipo. **Produto** é o que o usuário percebe. **Depois** são apostas que
+ainda precisam de decisão.
 
-### 1. Academia que frequenta
+O refactor de arquitetura que sustenta tudo isso está em
+[docs/ARQUITETURA.md](docs/ARQUITETURA.md), com as fases de `v0.2.0` a `v0.8.0`.
 
-- [ ] Adicionar campo `gym` (academia que frequenta) ao `UserProfile`, além da cidade que já existe.
-- [ ] Incluir o campo na criação de perfil (`OnboardingView`) e na edição (`EditProfileView`).
-- [ ] Mostrar a academia no card do Feed, junto com a cidade/distância.
+---
 
-### 2. Flag de convites
+## Fundação
 
-- [ ] Adicionar ao perfil uma flag `hasInvites` — "possui convites no plano?".
-- [ ] Se sim, guardar **quantos convites** o plano da pessoa dá (`inviteCount`) e quantos
-      ainda restam disponíveis (`invitesAvailable`).
-- [ ] Pedir essas informações na criação do perfil, logo depois da academia
-      (o campo de quantidade só aparece se a flag estiver ligada).
+Sem isso, nenhuma feature de produto se sustenta.
 
-### 3. Perguntar ao iniciar um treino
+- [ ] **Identidade de usuário.** O onboarding hoje não coleta nada: os três
+      botões chamam o mesmo `onContinue()`. Precisa de cadastro, sessão e
+      "quem sou eu" acessível de qualquer tela.
+- [ ] **Persistir estado.** Hoje fechar o app apaga tudo. Perfil e rascunhos em
+      SwiftData; token no Keychain.
+- [ ] **Uma fonte de verdade para o perfil.** `FeedView` cumprimenta "Lucas"
+      num literal enquanto `ProfileView` tem outra instância de `UserProfile`.
+      Editar o perfil precisa mudar as duas.
+- [ ] **Localização real.** Distância hoje é a string `"450m"`. Sem número não
+      dá para ordenar por proximidade nem filtrar por raio — que é a promessa
+      central do app.
+- [ ] **Push notification.** Convite para treinar *agora* que chega depois não
+      serve para nada. Sem push, o produto não funciona.
 
-- [ ] Quando a pessoa **tem convites**, todo início de treino abre uma pergunta:
-      "vai usar um convite neste treino?".
-- [ ] Se ela responder que sim, descontar 1 do saldo disponível.
-- [ ] Se não tem convites, não perguntar nada — o fluxo segue direto.
+## Produto
 
-### 4. Mostrar no Feed
+### Academia e convites (sua ideia de 23/09)
 
-- [ ] Exibir no Feed quantos convites a pessoa ainda tem disponíveis.
-- [ ] Exibir também a academia que ela frequenta.
+- [ ] Campo `gym` no perfil, ao lado da cidade.
+- [ ] Coletar no onboarding e permitir editar no perfil.
+- [ ] Mostrar a academia no card do Feed, junto de cidade e distância.
+- [ ] Flag `hasInvites` — "seu plano dá convites?".
+- [ ] Se sim: quantos o plano dá e quantos ainda restam.
+- [ ] Ao iniciar um treino, perguntar "vai usar um convite?" — e descontar 1 se
+      a resposta for sim. Quem não tem convite não vê pergunta nenhuma.
+- [ ] Exibir no Feed os convites disponíveis e a academia.
 
-### Pontos a decidir depois
+> **Decisões em aberto** (levantadas em 23/09, ainda de pé):
+> - O saldo zera todo mês junto com o plano, ou é total fixo?
+> - "Iniciar um treino" é marcar disponibilidade, ou um momento separado?
+> - Os convites no Feed são os **meus** ou os de cada parceiro listado?
+>   Esta terceira muda a feature inteira: se for a dos outros, o app ganha
+>   uma mecânica nova — *quem pode me levar na academia dele*.
 
-- O saldo de convites zera todo mês (junto com o plano) ou é um total fixo?
-- "Iniciar um treino" é marcar disponibilidade (`MarkAvailabilitySheet`) ou um
-  momento separado, quando o treino realmente começa?
-- Os convites do Feed são os **meus** (saldo próprio, sempre visível) ou os de
-  cada parceiro listado (para eu saber quem pode me levar na academia dele)?
+### Fechar o que já está desenhado
+
+- [ ] **Chat.** A aba existe como placeholder. Convite aceito sem lugar para
+      combinar horário morre ali.
+- [ ] **Busca.** A aba existe como placeholder. Filtro por modalidade, horário
+      e distância.
+- [ ] **Convidar de verdade.** Hoje `invite()` só mostra um toast e guarda um
+      `Set<UUID>` local. Nada sai do aparelho.
+
+### Dar lastro ao que hoje é fachada
+
+O `PartnerPortfolio` já modela **confiabilidade**, **sequência**, **avaliações**
+e **medalhas** — mas tudo é gerado por `sample(for:)` a partir do nome da
+pessoa. A estrutura de dados mais valiosa do app está pronta e vazia.
+
+- [ ] **Confirmar presença.** Sem isso, confiabilidade é número inventado.
+      É a métrica que resolve o maior medo do usuário: marcar e levar bolo.
+- [ ] **Avaliar depois do treino.** Só quem treinou junto avalia.
+- [ ] **Sequência real**, contada a partir de treinos confirmados.
+- [ ] **Medalhas** a partir de fatos, não de `seed % 4`.
+
+## Depois
+
+Apostas — nenhuma deve começar antes da Fundação.
+
+- [ ] **Parceiro fixo.** O interesse "Parceiro fixo" já existe no catálogo, mas
+      não faz nada. Treino recorrente com a mesma pessoa é retenção, e é o que
+      transforma o app de busca em rotina.
+- [ ] **Compatibilidade de verdade.** Hoje é `70 + (seed % 28)`. Cruzar esporte,
+      horário, nível e academia é o diferencial defensável do produto.
+- [ ] **Grupos.** "Grupo/comunidade" também já está no catálogo sem função.
+- [ ] **Segurança.** Treinar com desconhecido é o risco real do app: denúncia,
+      bloqueio, primeiro encontro em local público.
+- [ ] **Parceria com academias.** A feature de convites já aponta para cá — a
+      academia tem interesse em levar visitante.
+
+## Dívida técnica
+
+- [ ] Zerar `.swiftlint-baseline.json`: 9 violações, todas em Views grandes.
+      Cada fase do refactor encolhe a lista; quando chegar a zero, o arquivo
+      é apagado.
+- [ ] Teste para cada ViewModel criado, na pasta da feature em
+      `Tests/TreinaJuntoTests/Features/`.
+- [ ] Testes de snapshot dos componentes do DesignSystem, depois da fase 2.

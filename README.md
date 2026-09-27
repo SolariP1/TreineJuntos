@@ -50,7 +50,8 @@ docs/releases/         nota de cada versão
 .githooks/             validação de commit e formatação
 .github/workflows/     CI
 CONVENTIONS.md         padrões do projeto — leia antes de commitar
-TODO.md                próximos passos
+docs/ARQUITETURA.md    diagnóstico e plano de migração
+TODO.md                backlog
 ```
 
 ## Contribuindo
