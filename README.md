@@ -1,5 +1,9 @@
 # TreinaJunto
 
+[![CI](https://github.com/SolariP1/TreineJuntos/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/SolariP1/TreineJuntos/actions/workflows/ci.yml)
+[![Versão](https://img.shields.io/github/v/release/SolariP1/TreineJuntos?label=vers%C3%A3o&color=2ea44f)](https://github.com/SolariP1/TreineJuntos/releases/latest)
+[![Plataforma](https://img.shields.io/badge/iOS-17%2B-000000?logo=apple&logoColor=white)](https://developer.apple.com/ios/)
+
 App iOS para encontrar parceiros de treino por perto — quem está disponível,
 em qual esporte e a que distância.
 
