@@ -1,0 +1,46 @@
+# ── macOS ───────────────────────────────────────────────────────────────
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# ── Xcode ───────────────────────────────────────────────────────────────
+build/
+DerivedData/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+xcuserdata/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+timeline.xctimeline
+playground.xcworkspace
+
+# ── XcodeGen ────────────────────────────────────────────────────────────
+# A fonte da verdade do projeto é o project.yml.
+# O .xcodeproj é gerado — rode `xcodegen generate` após clonar.
+*.xcodeproj/
+*.xcworkspace/
+
+# ── Swift Package Manager ───────────────────────────────────────────────
+.build/
+.swiftpm/
+Packages/
+Package.resolved
+
+# ── Dependências ────────────────────────────────────────────────────────
+Pods/
+Carthage/Build/
+
+# ── Segredos e assinatura ───────────────────────────────────────────────
+*.p8
+*.p12
+*.mobileprovision
+*.cer
+.env
+.env.*
+!.env.example
+secrets.xcconfig
