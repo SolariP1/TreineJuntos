@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct OnboardingView: View {
-    var onContinue: () -> Void
+    var onSignIn: (SignInMethod) -> Void
 
     @State private var ringsExpanded = false
     @State private var runnerBob = false
@@ -60,7 +60,7 @@ struct OnboardingView: View {
 
     private var signInOptions: some View {
         VStack(spacing: 10) {
-            Button(action: onContinue) {
+            Button { onSignIn(.apple) } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "apple.logo")
                     Text("Continuar com Apple")
@@ -73,7 +73,7 @@ struct OnboardingView: View {
             .background(Theme.ink, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             .buttonStyle(.pressable)
 
-            Button(action: onContinue) {
+            Button { onSignIn(.google) } label: {
                 HStack(spacing: 10) {
                     GoogleGlyph()
                     Text("Continuar com Google")
@@ -90,7 +90,7 @@ struct OnboardingView: View {
             )
             .buttonStyle(.pressable)
 
-            Button(action: onContinue) {
+            Button { onSignIn(.email) } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "envelope.fill")
                     Text("Continuar com e-mail")
@@ -179,5 +179,5 @@ private struct GoogleGlyph: View {
 }
 
 #Preview {
-    OnboardingView(onContinue: {})
+    OnboardingView { _ in }
 }

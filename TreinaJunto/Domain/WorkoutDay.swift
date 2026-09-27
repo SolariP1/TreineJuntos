@@ -1,7 +1,7 @@
 import Foundation
 
 /// Um dia da rotina semanal de treino.
-struct WorkoutDay: Identifiable, Hashable, Sendable {
+struct WorkoutDay: Identifiable, Hashable, Codable, Sendable {
     let id: UUID
     let day: String
     let focus: String
