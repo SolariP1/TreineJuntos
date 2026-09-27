@@ -1,7 +1,7 @@
 import Foundation
 
 /// Avaliação que um parceiro deixou depois de um treino.
-struct Review: Identifiable, Hashable, Sendable {
+struct Review: Identifiable, Hashable, Codable, Sendable {
     let id: UUID
     let reviewerName: String
     let rating: Int

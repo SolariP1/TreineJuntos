@@ -1,7 +1,7 @@
 import Foundation
 
 /// O perfil de quem está usando o app.
-struct UserProfile: Hashable, Sendable {
+struct UserProfile: Hashable, Codable, Sendable {
     var name: String
     var city: String
     var bio: String

@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// Onde as implementações concretas são escolhidas.
@@ -13,15 +14,31 @@ struct AppDependencies: Sendable {
     let partners: PartnerRepository
     let invites: InviteRepository
     let profiles: ProfileRepository
+    let session: SessionStore
 
     init(
         partners: PartnerRepository = InMemoryPartnerRepository(),
         invites: InviteRepository = InMemoryInviteRepository(),
-        profiles: ProfileRepository = InMemoryProfileRepository()
+        profiles: ProfileRepository = InMemoryProfileRepository(),
+        session: SessionStore = UserDefaultsSessionStore()
     ) {
         self.partners = partners
         self.invites = invites
         self.profiles = profiles
+        self.session = session
+    }
+
+    /// As dependências de verdade do app: perfil em disco, sessão no
+    /// aparelho. Parceiros e convites seguem em memória até haver servidor.
+    static func live() -> AppDependencies {
+        do {
+            let container = try ProfileStore.makeContainer()
+            return AppDependencies(profiles: SwiftDataProfileRepository(modelContainer: container))
+        } catch {
+            // Sem banco, o app ainda abre — o perfil só não sobrevive a
+            // fechar. É melhor do que não abrir.
+            return AppDependencies()
+        }
     }
 
     /// Usado pelo ambiente e pelos previews. Um só, para não realocar

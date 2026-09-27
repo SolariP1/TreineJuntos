@@ -15,11 +15,14 @@ O refactor de arquitetura que sustenta tudo isso está em
 
 Sem isso, nenhuma feature de produto se sustenta.
 
-- [ ] **Identidade de usuário.** O onboarding hoje não coleta nada: os três
-      botões chamam o mesmo `onContinue()`. Precisa de cadastro, sessão e
-      "quem sou eu" acessível de qualquer tela.
-- [ ] **Persistir estado.** Hoje fechar o app apaga tudo. Perfil e rascunhos em
-      SwiftData; token no Keychain.
+- [x] ~~Sessão e "quem sou eu" acessível de qualquer tela~~ — feito na v0.8.0
+      (`AppSession`). Falta a autenticação de verdade: os três botões ainda
+      só registram por onde a pessoa entrou, sem verificar nada.
+- [ ] **Onboarding que coleta.** Os botões entram, mas não perguntam nome,
+      cidade, academia nem esportes — o perfil ainda nasce do exemplo.
+- [x] ~~Persistir perfil e sessão~~ — feito na v0.8.0 (SwiftData + UserDefaults).
+- [ ] **Keychain para o token**, quando houver autenticação. `UserDefaults`
+      guarda só o marcador de sessão, nunca credencial.
 - [ ] **Uma fonte de verdade para o perfil.** `FeedView` cumprimenta "Lucas"
       num literal enquanto `ProfileView` tem outra instância de `UserProfile`.
       Editar o perfil precisa mudar as duas.
