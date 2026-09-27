@@ -53,6 +53,13 @@ Sem isso, nenhuma feature de produto se sustenta.
 >   Esta terceira muda a feature inteira: se for a dos outros, o app ganha
 >   uma mecânica nova — *quem pode me levar na academia dele*.
 
+### Defeitos encontrados
+
+- [ ] **O toast nunca aparece.** Ele é desenhado com `padding(.bottom, 12)`,
+      mas a tab bar flutuante ocupa ~90pt — então todo aviso de "Convite
+      enviado" fica escondido atrás dela. É anterior ao refactor: nenhuma
+      confirmação de ação chega ao usuário hoje.
+
 ### Fechar o que já está desenhado
 
 - [ ] **Chat.** A aba existe como placeholder. Convite aceito sem lugar para
