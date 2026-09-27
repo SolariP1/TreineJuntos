@@ -9,7 +9,9 @@ struct PartnerPortfolioView: View {
     @State private var statsRevealed = false
     @State private var selectedDay: Int?
 
-    private var style: SportStyle { Playful.style(for: portfolio.partner.sport) }
+    private var style: SportStyle {
+        Playful.style(for: portfolio.partner.sport)
+    }
 
     var body: some View {
         ZStack {
@@ -114,7 +116,11 @@ struct PartnerPortfolioView: View {
         }
         .frame(maxWidth: .infinity)
         .background(
-            LinearGradient(colors: [style.base, style.deep], startPoint: .topLeading, endPoint: .bottomTrailing),
+            LinearGradient(
+                colors: [style.base, style.deep],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
             in: RoundedRectangle(cornerRadius: 34, style: .continuous)
         )
         .clipShape(RoundedRectangle(cornerRadius: 34, style: .continuous))
@@ -177,7 +183,14 @@ struct PartnerPortfolioView: View {
         }
     }
 
-    private func statTile(value: Int, suffix: String, label: String, symbol: String, color: Color, pulses: Bool) -> some View {
+    private func statTile(
+        value: Int,
+        suffix: String,
+        label: String,
+        symbol: String,
+        color: Color,
+        pulses: Bool
+    ) -> some View {
         VStack(spacing: 6) {
             Group {
                 if pulses {
@@ -278,10 +291,10 @@ struct PartnerPortfolioView: View {
             }
 
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 7), spacing: 8) {
-                ForEach(0..<leadingBlanks, id: \.self) { index in
+                ForEach(0 ..< leadingBlanks, id: \.self) { index in
                     Color.clear.frame(height: 38).id("blank\(index)")
                 }
-                ForEach(1...daysInMonth, id: \.self) { day in
+                ForEach(1 ... daysInMonth, id: \.self) { day in
                     dayCell(day)
                 }
             }
@@ -308,7 +321,10 @@ struct PartnerPortfolioView: View {
                     Circle().fill(style.base)
                 case .openedAlone:
                     Circle()
-                        .strokeBorder(style.base.opacity(0.55), style: StrokeStyle(lineWidth: 1.6, dash: [3, 3]))
+                        .strokeBorder(
+                            style.base.opacity(0.55),
+                            style: StrokeStyle(lineWidth: 1.6, dash: [3, 3])
+                        )
                 case .idle:
                     Circle().fill(Playful.canvas)
                 }
@@ -345,9 +361,9 @@ struct PartnerPortfolioView: View {
 
     private func dayTextColor(_ state: TrainingDayState) -> Color {
         switch state {
-        case .trainedTogether: return .white
-        case .openedAlone: return style.deep
-        case .idle: return Playful.inkFaint
+        case .trainedTogether: .white
+        case .openedAlone: style.deep
+        case .idle: Playful.inkFaint
         }
     }
 
@@ -369,7 +385,10 @@ struct PartnerPortfolioView: View {
                 if fill {
                     Circle().fill(style.base)
                 } else {
-                    Circle().strokeBorder(style.base.opacity(0.55), style: StrokeStyle(lineWidth: 1.4, dash: [2.5, 2.5]))
+                    Circle().strokeBorder(
+                        style.base.opacity(0.55),
+                        style: StrokeStyle(lineWidth: 1.4, dash: [2.5, 2.5])
+                    )
                 }
             }
             .frame(width: 11, height: 11)
@@ -407,7 +426,10 @@ struct PartnerPortfolioView: View {
                         }
                     }
                     .padding(12)
-                    .background(Playful.canvas.opacity(0.6), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .background(
+                        Playful.canvas.opacity(0.6),
+                        in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    )
                 }
             }
         }
@@ -467,7 +489,7 @@ struct PartnerPortfolioView: View {
                                     .font(.brand(12.5, weight: .bold))
                                     .foregroundStyle(Playful.ink)
                                 HStack(spacing: 1.5) {
-                                    ForEach(0..<5, id: \.self) { index in
+                                    ForEach(0 ..< 5, id: \.self) { index in
                                         Image(systemName: index < review.rating ? "star.fill" : "star")
                                             .font(.system(size: 8))
                                             .foregroundStyle(Playful.style(for: "Ciclismo").base)
@@ -484,7 +506,10 @@ struct PartnerPortfolioView: View {
                         Spacer(minLength: 0)
                     }
                     .padding(12)
-                    .background(Playful.canvas.opacity(0.6), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .background(
+                        Playful.canvas.opacity(0.6),
+                        in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    )
                 }
             }
         }

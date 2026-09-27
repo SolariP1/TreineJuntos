@@ -1,5 +1,5 @@
-import SwiftUI
 import PhotosUI
+import SwiftUI
 
 struct EditProfileView: View {
     @Binding var profile: UserProfile
@@ -16,8 +16,8 @@ struct EditProfileView: View {
     private let bioLimit = 160
 
     init(profile: Binding<UserProfile>) {
-        self._profile = profile
-        self._draft = State(initialValue: profile.wrappedValue)
+        _profile = profile
+        _draft = State(initialValue: profile.wrappedValue)
     }
 
     var body: some View {
@@ -28,8 +28,18 @@ struct EditProfileView: View {
                     thumbnailStrip
 
                     VStack(alignment: .leading, spacing: 18) {
-                        underlineField("Nome", text: $draft.name, font: .display(21, weight: .semibold), field: .name)
-                        underlineField("Cidade, UF", text: $draft.city, font: .brand(15, weight: .medium), field: .city)
+                        underlineField(
+                            "Nome",
+                            text: $draft.name,
+                            font: .display(21, weight: .semibold),
+                            field: .name
+                        )
+                        underlineField(
+                            "Cidade, UF",
+                            text: $draft.city,
+                            font: .brand(15, weight: .medium),
+                            field: .city
+                        )
                     }
 
                     bioEditor
@@ -49,7 +59,10 @@ struct EditProfileView: View {
                         eyebrow("Interesses para treino")
                         FlowLayout(spacing: 8) {
                             ForEach(availableInterests, id: \.self) { interest in
-                                ToggleChip(label: interest, isOn: draft.trainingInterests.contains(interest)) {
+                                ToggleChip(
+                                    label: interest,
+                                    isOn: draft.trainingInterests.contains(interest)
+                                ) {
                                     toggle(interest, in: &draft.trainingInterests)
                                 }
                             }
@@ -97,12 +110,16 @@ struct EditProfileView: View {
                             .resizable()
                             .scaledToFill()
                     } else {
-                        LinearGradient(colors: [Theme.accent, Color(red: 0.788, green: 0.239, blue: 0.071)], startPoint: .topLeading, endPoint: .bottomTrailing)
-                            .overlay(
-                                Image(systemName: "person.fill")
-                                    .font(.system(size: 64))
-                                    .foregroundStyle(.white.opacity(0.55))
-                            )
+                        LinearGradient(
+                            colors: [Theme.accent, Color(red: 0.788, green: 0.239, blue: 0.071)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                        .overlay(
+                            Image(systemName: "person.fill")
+                                .font(.system(size: 64))
+                                .foregroundStyle(.white.opacity(0.55))
+                        )
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -138,7 +155,11 @@ struct EditProfileView: View {
                 let data = try? await newItem.loadTransferable(type: Data.self)
                 await MainActor.run {
                     if let data {
-                        if draft.photos.isEmpty { draft.photos.append(data) } else { draft.photos[0] = data }
+                        if draft.photos.isEmpty {
+                            draft.photos.append(data)
+                        } else {
+                            draft.photos[0] = data
+                        }
                     }
                     isLoadingHero = false
                     heroPickerItem = nil
@@ -171,7 +192,10 @@ struct EditProfileView: View {
                             matching: .images
                         ) {
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .strokeBorder(Theme.cardBorder, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+                                .strokeBorder(
+                                    Theme.cardBorder,
+                                    style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])
+                                )
                                 .frame(width: 68, height: 88)
                                 .overlay(
                                     Group {
@@ -196,11 +220,15 @@ struct EditProfileView: View {
             Task {
                 var newData: [Data] = []
                 for item in newItems {
-                    if let data = try? await item.loadTransferable(type: Data.self) { newData.append(data) }
+                    if let data = try? await item.loadTransferable(type: Data.self) {
+                        newData.append(data)
+                    }
                 }
                 await MainActor.run {
                     draft.photos.append(contentsOf: newData)
-                    if draft.photos.count > 6 { draft.photos = Array(draft.photos.prefix(6)) }
+                    if draft.photos.count > 6 {
+                        draft.photos = Array(draft.photos.prefix(6))
+                    }
                     morePickerItems = []
                     isLoadingMore = false
                 }
@@ -220,7 +248,9 @@ struct EditProfileView: View {
             .frame(width: 68, height: 88)
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 
-            Button(action: { draft.photos.remove(at: index) }) {
+            Button {
+                draft.photos.remove(at: index)
+            } label: {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 15))
                     .foregroundStyle(.white, .black.opacity(0.55))
@@ -232,7 +262,12 @@ struct EditProfileView: View {
 
     // MARK: - Underline text field
 
-    private func underlineField(_ placeholder: String, text: Binding<String>, font: Font, field: Field) -> some View {
+    private func underlineField(
+        _ placeholder: String,
+        text: Binding<String>,
+        font: Font,
+        field: Field
+    ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             TextField(placeholder, text: text)
                 .font(font)
@@ -264,7 +299,9 @@ struct EditProfileView: View {
                 .frame(minHeight: 84)
                 .padding(.horizontal, -5)
                 .onChange(of: draft.bio) { _, newValue in
-                    if newValue.count > bioLimit { draft.bio = String(newValue.prefix(bioLimit)) }
+                    if newValue.count > bioLimit {
+                        draft.bio = String(newValue.prefix(bioLimit))
+                    }
                 }
             Rectangle()
                 .fill(focusedField == .bio ? Theme.accent : Theme.cardBorder)

@@ -4,18 +4,16 @@ struct RootView: View {
     @State private var isLoggedIn = false
 
     var body: some View {
-        Group {
-            if isLoggedIn {
-                MainTabView(onLogout: {
-                    withAnimation(.rootTransition) { isLoggedIn = false }
-                })
-                .transition(.loginReveal)
-            } else {
-                OnboardingView(onContinue: {
-                    withAnimation(.rootTransition) { isLoggedIn = true }
-                })
-                .transition(.loginDismiss)
-            }
+        if isLoggedIn {
+            MainTabView(onLogout: {
+                withAnimation(.rootTransition) { isLoggedIn = false }
+            })
+            .transition(.loginReveal)
+        } else {
+            OnboardingView(onContinue: {
+                withAnimation(.rootTransition) { isLoggedIn = true }
+            })
+            .transition(.loginDismiss)
         }
     }
 }

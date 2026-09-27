@@ -37,7 +37,9 @@ struct PlaceholderView: View {
     let title: String
     let message: String
 
-    private var style: SportStyle { Playful.style(for: sport) }
+    private var style: SportStyle {
+        Playful.style(for: sport)
+    }
 
     var body: some View {
         ZStack {

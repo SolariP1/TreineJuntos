@@ -13,10 +13,26 @@ enum Theme {
 
     /// Personal accent gradients used for avatar placeholders.
     static let avatarGradients: [LinearGradient] = [
-        LinearGradient(colors: [Color(red: 0.31, green: 0.49, blue: 0.97), Color(red: 0.17, green: 0.31, blue: 0.80)], startPoint: .topLeading, endPoint: .bottomTrailing),
-        LinearGradient(colors: [Color(red: 0.25, green: 0.68, blue: 0.45), Color(red: 0.12, green: 0.48, blue: 0.30)], startPoint: .topLeading, endPoint: .bottomTrailing),
-        LinearGradient(colors: [Color(red: 0.91, green: 0.37, blue: 0.66), Color(red: 0.72, green: 0.19, blue: 0.48)], startPoint: .topLeading, endPoint: .bottomTrailing),
-        LinearGradient(colors: [Color(red: 0.95, green: 0.66, blue: 0.23), Color(red: 0.84, green: 0.48, blue: 0.07)], startPoint: .topLeading, endPoint: .bottomTrailing),
+        LinearGradient(
+            colors: [Color(red: 0.31, green: 0.49, blue: 0.97), Color(red: 0.17, green: 0.31, blue: 0.80)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        ),
+        LinearGradient(
+            colors: [Color(red: 0.25, green: 0.68, blue: 0.45), Color(red: 0.12, green: 0.48, blue: 0.30)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        ),
+        LinearGradient(
+            colors: [Color(red: 0.91, green: 0.37, blue: 0.66), Color(red: 0.72, green: 0.19, blue: 0.48)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        ),
+        LinearGradient(
+            colors: [Color(red: 0.95, green: 0.66, blue: 0.23), Color(red: 0.84, green: 0.48, blue: 0.07)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     ]
 }
 
@@ -32,20 +48,21 @@ struct PressableButtonStyle: ButtonStyle {
 }
 
 extension ButtonStyle where Self == PressableButtonStyle {
-    static var pressable: PressableButtonStyle { PressableButtonStyle() }
+    static var pressable: PressableButtonStyle {
+        PressableButtonStyle()
+    }
 }
 
 extension Font {
     /// Display face — Unbounded. Used for headlines and anything that needs
     /// the brand's geometric, characterful personality.
     static func display(_ size: CGFloat, weight: Font.Weight = .bold) -> Font {
-        let name: String
-        switch weight {
-        case .black, .heavy: name = "Unbounded-ExtraBold"
-        case .bold: name = "Unbounded-Bold"
-        case .semibold: name = "Unbounded-SemiBold"
-        case .medium: name = "Unbounded-Medium"
-        default: name = "Unbounded-Regular"
+        let name = switch weight {
+        case .black, .heavy: "Unbounded-ExtraBold"
+        case .bold: "Unbounded-Bold"
+        case .semibold: "Unbounded-SemiBold"
+        case .medium: "Unbounded-Medium"
+        default: "Unbounded-Regular"
         }
         return .custom(name, size: size)
     }
@@ -53,12 +70,11 @@ extension Font {
     /// Body/UI face — Plus Jakarta Sans. Used for everything else: labels,
     /// buttons, paragraph text.
     static func brand(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        let name: String
-        switch weight {
-        case .bold, .black, .heavy: name = "PlusJakartaSans-Bold"
-        case .semibold: name = "PlusJakartaSans-SemiBold"
-        case .medium: name = "PlusJakartaSans-Medium"
-        default: name = "PlusJakartaSans-Regular"
+        let name = switch weight {
+        case .bold, .black, .heavy: "PlusJakartaSans-Bold"
+        case .semibold: "PlusJakartaSans-SemiBold"
+        case .medium: "PlusJakartaSans-Medium"
+        default: "PlusJakartaSans-Regular"
         }
         return .custom(name, size: size)
     }

@@ -110,7 +110,8 @@ struct OnboardingView: View {
         ZStack(alignment: .bottomTrailing) {
             LinearGradient(
                 colors: [Theme.accent, Color(red: 0.788, green: 0.239, blue: 0.071)],
-                startPoint: .topLeading, endPoint: .bottomTrailing
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
             )
             .overlay(
                 ZStack {
@@ -125,7 +126,7 @@ struct OnboardingView: View {
                         .opacity(ringsExpanded ? 0.12 : 0.22)
                         .offset(x: 110, y: -100)
 
-                    ForEach(0..<3) { i in
+                    ForEach(0 ..< 3) { i in
                         Circle()
                             .fill(.white.opacity(0.5))
                             .frame(width: 5, height: 5)
@@ -168,9 +169,10 @@ private struct GoogleGlyph: View {
                         Color(red: 0.259, green: 0.522, blue: 0.957),
                         Color(red: 0.918, green: 0.263, blue: 0.208),
                         Color(red: 0.984, green: 0.737, blue: 0.020),
-                        Color(red: 0.204, green: 0.659, blue: 0.325),
+                        Color(red: 0.204, green: 0.659, blue: 0.325)
                     ],
-                    startPoint: .topLeading, endPoint: .bottomTrailing
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
                 )
             )
     }

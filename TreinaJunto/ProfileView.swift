@@ -11,7 +11,9 @@ struct ProfileView: View {
     @State private var statsRevealed = false
     @Namespace private var photoNamespace
 
-    private var style: SportStyle { Playful.style(for: profile.sports.first ?? "Corrida") }
+    private var style: SportStyle {
+        Playful.style(for: profile.sports.first ?? "Corrida")
+    }
 
     var body: some View {
         ZStack {
@@ -85,7 +87,11 @@ struct ProfileView: View {
                             .frame(width: 98, height: 98)
                             .clipShape(Circle())
                             .overlay(Circle().stroke(.white.opacity(0.9), lineWidth: 4))
-                            .matchedGeometryEffect(id: "profilePhoto", in: photoNamespace, isSource: !showPhotoViewer)
+                            .matchedGeometryEffect(
+                                id: "profilePhoto",
+                                in: photoNamespace,
+                                isSource: !showPhotoViewer
+                            )
 
                         Image(systemName: "pencil")
                             .font(.system(size: 11, weight: .bold))
@@ -122,7 +128,11 @@ struct ProfileView: View {
         }
         .frame(maxWidth: .infinity)
         .background(
-            LinearGradient(colors: [style.base, style.deep], startPoint: .topLeading, endPoint: .bottomTrailing),
+            LinearGradient(
+                colors: [style.base, style.deep],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
             in: RoundedRectangle(cornerRadius: 34, style: .continuous)
         )
         .clipShape(RoundedRectangle(cornerRadius: 34, style: .continuous))
@@ -136,8 +146,12 @@ struct ProfileView: View {
         } else {
             ZStack {
                 LinearGradient(
-                    colors: [Color(red: 0.25, green: 0.68, blue: 0.45), Color(red: 0.12, green: 0.48, blue: 0.30)],
-                    startPoint: .topLeading, endPoint: .bottomTrailing
+                    colors: [
+                        Color(red: 0.25, green: 0.68, blue: 0.45),
+                        Color(red: 0.12, green: 0.48, blue: 0.30)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
                 )
                 Text(String(profile.name.prefix(1)))
                     .font(.display(34))
@@ -190,15 +204,31 @@ struct ProfileView: View {
 
     private var statsStrip: some View {
         HStack(spacing: 10) {
-            statTile(value: statsRevealed ? profile.trainings : 0, suffix: "", label: "treinos",
-                     symbol: "figure.run.circle.fill", color: Playful.style(for: "Corrida").base)
-            statTile(value: statsRevealed ? profile.partners : 0, suffix: "", label: "parceiros",
-                     symbol: "person.2.fill", color: Playful.style(for: "Musculação").base)
+            statTile(
+                value: statsRevealed ? profile.trainings : 0,
+                suffix: "",
+                label: "treinos",
+                symbol: "figure.run.circle.fill",
+                color: Playful.style(for: "Corrida").base
+            )
+            statTile(
+                value: statsRevealed ? profile.partners : 0,
+                suffix: "",
+                label: "parceiros",
+                symbol: "person.2.fill",
+                color: Playful.style(for: "Musculação").base
+            )
             ratingTile
         }
     }
 
-    private func statTile(value: Int, suffix: String, label: String, symbol: String, color: Color) -> some View {
+    private func statTile(
+        value: Int,
+        suffix: String,
+        label: String,
+        symbol: String,
+        color: Color
+    ) -> some View {
         VStack(spacing: 6) {
             Image(systemName: symbol).font(.system(size: 17)).foregroundStyle(color)
             Text("\(value)\(suffix)")
@@ -263,7 +293,7 @@ struct ProfileView: View {
             ("flame.fill", "7 dias seguidos", Playful.style(for: "Corrida")),
             ("checkmark.seal.fill", "Sempre aparece", Playful.style(for: "Funcional")),
             ("sunrise.fill", "Madrugador", Playful.style(for: "Yoga")),
-            ("medal.fill", "Veterano", Playful.style(for: "Ciclismo")),
+            ("medal.fill", "Veterano", Playful.style(for: "Ciclismo"))
         ]
     }
 
@@ -282,7 +312,7 @@ struct ProfileView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 9) {
                     if profile.photos.isEmpty {
-                        ForEach(0..<3, id: \.self) { index in
+                        ForEach(0 ..< 3, id: \.self) { index in
                             RoundedRectangle(cornerRadius: 18, style: .continuous)
                                 .fill(Playful.canvas)
                                 .frame(width: 88, height: 112)
@@ -309,7 +339,10 @@ struct ProfileView: View {
 
                     Button { showEditSheet = true } label: {
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .strokeBorder(style.base.opacity(0.4), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+                            .strokeBorder(
+                                style.base.opacity(0.4),
+                                style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])
+                            )
                             .frame(width: 88, height: 112)
                             .overlay(
                                 VStack(spacing: 5) {
@@ -367,7 +400,10 @@ struct ProfileView: View {
                         }
                     }
                     .padding(12)
-                    .background(Playful.canvas.opacity(0.6), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .background(
+                        Playful.canvas.opacity(0.6),
+                        in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    )
                 }
             }
         }
@@ -445,7 +481,7 @@ struct ProfileView: View {
                                     .font(.brand(12.5, weight: .bold))
                                     .foregroundStyle(Playful.ink)
                                 HStack(spacing: 1.5) {
-                                    ForEach(0..<5, id: \.self) { index in
+                                    ForEach(0 ..< 5, id: \.self) { index in
                                         Image(systemName: index < review.rating ? "star.fill" : "star")
                                             .font(.system(size: 8))
                                             .foregroundStyle(Playful.style(for: "Ciclismo").base)
@@ -462,7 +498,10 @@ struct ProfileView: View {
                         Spacer(minLength: 0)
                     }
                     .padding(12)
-                    .background(Playful.canvas.opacity(0.6), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .background(
+                        Playful.canvas.opacity(0.6),
+                        in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    )
                 }
             }
         }

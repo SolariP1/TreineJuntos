@@ -10,6 +10,12 @@ struct MarkAvailabilitySheet: View {
     @State private var selectedTime = "Agora"
 
     private let timeOptions = ["Agora", "Em 30 min", "Em 1h", "Mais tarde"]
+
+    private var resumo: String {
+        "Quem estiver perto de você vai ver que está disponível pra treinar "
+            + "\(selectedSport.lowercased()) — \(selectedTime.lowercased())."
+    }
+
     private let columns = [GridItem(.adaptive(minimum: 100), spacing: 8)]
 
     var body: some View {
@@ -46,14 +52,14 @@ struct MarkAvailabilitySheet: View {
                         }
                     }
 
-                    Text("Quem estiver perto de você vai ver que está disponível pra treinar \(selectedSport.lowercased()) — \(selectedTime.lowercased()).")
+                    Text(resumo)
                         .font(.brand(12.5))
                         .foregroundStyle(Theme.inkMuted)
 
-                    Button(action: {
+                    Button {
                         onPublish(selectedSport, selectedTime)
                         dismiss()
-                    }) {
+                    } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "bolt.fill")
                             Text("Publicar disponibilidade")

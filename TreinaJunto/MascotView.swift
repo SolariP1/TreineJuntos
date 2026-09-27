@@ -19,7 +19,11 @@ struct MascotView: View {
         ZStack {
             BlobShape(phase: phase, lobes: 5, amplitude: 0.09)
                 .fill(
-                    LinearGradient(colors: [color, deepColor], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    LinearGradient(
+                        colors: [color, deepColor],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
                 )
                 .overlay(
                     BlobShape(phase: phase, lobes: 5, amplitude: 0.09)
@@ -61,29 +65,31 @@ struct MascotView: View {
             .scaleEffect(y: blinking ? 0.12 : 1, anchor: .center)
     }
 
+    @ViewBuilder
     private var mouth: some View {
-        Group {
-            switch mood {
-            case .happy:
-                SmileShape()
-                    .stroke(Color(red: 0.11, green: 0.09, blue: 0.15), style: StrokeStyle(lineWidth: size * 0.035, lineCap: .round))
-                    .frame(width: size * 0.22, height: size * 0.1)
-            case .cheer:
-                // Open, grinning mouth — kept wider than tall so it reads as a
-                // laugh rather than a startled "O".
-                Ellipse()
-                    .fill(Color(red: 0.11, green: 0.09, blue: 0.15))
-                    .frame(width: size * 0.2, height: size * 0.12)
-            case .sleepy:
-                Capsule()
-                    .fill(Color(red: 0.11, green: 0.09, blue: 0.15))
-                    .frame(width: size * 0.13, height: size * 0.035)
-            }
+        switch mood {
+        case .happy:
+            SmileShape()
+                .stroke(
+                    Color(red: 0.11, green: 0.09, blue: 0.15),
+                    style: StrokeStyle(lineWidth: size * 0.035, lineCap: .round)
+                )
+                .frame(width: size * 0.22, height: size * 0.1)
+        case .cheer:
+            // Open, grinning mouth — kept wider than tall so it reads as a
+            // laugh rather than a startled "O".
+            Ellipse()
+                .fill(Color(red: 0.11, green: 0.09, blue: 0.15))
+                .frame(width: size * 0.2, height: size * 0.12)
+        case .sleepy:
+            Capsule()
+                .fill(Color(red: 0.11, green: 0.09, blue: 0.15))
+                .frame(width: size * 0.13, height: size * 0.035)
         }
     }
 
     private func scheduleBlink() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + Double.random(in: 2.5...5)) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + Double.random(in: 2.5 ... 5)) {
             withAnimation(.easeInOut(duration: 0.09)) { blinking = true }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
                 withAnimation(.easeInOut(duration: 0.09)) { blinking = false }
@@ -107,9 +113,21 @@ private struct SmileShape: Shape {
 
 #Preview {
     HStack(spacing: 20) {
-        MascotView(color: Playful.style(for: "Corrida").base, deepColor: Playful.style(for: "Corrida").deep, mood: .happy)
-        MascotView(color: Playful.style(for: "Musculação").base, deepColor: Playful.style(for: "Musculação").deep, mood: .cheer)
-        MascotView(color: Playful.style(for: "Natação").base, deepColor: Playful.style(for: "Natação").deep, mood: .sleepy)
+        MascotView(
+            color: Playful.style(for: "Corrida").base,
+            deepColor: Playful.style(for: "Corrida").deep,
+            mood: .happy
+        )
+        MascotView(
+            color: Playful.style(for: "Musculação").base,
+            deepColor: Playful.style(for: "Musculação").deep,
+            mood: .cheer
+        )
+        MascotView(
+            color: Playful.style(for: "Natação").base,
+            deepColor: Playful.style(for: "Natação").deep,
+            mood: .sleepy
+        )
     }
     .padding(40)
     .background(Playful.canvas)

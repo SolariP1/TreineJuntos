@@ -79,7 +79,7 @@ struct FeedView: View {
 
             Spacer()
 
-            Button(action: {}) {
+            Button {} label: {
                 Image(systemName: "bell.fill")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(Playful.ink)
@@ -136,13 +136,22 @@ struct FeedView: View {
 
                     Spacer(minLength: 0)
 
-                    MascotView(color: .white.opacity(0.95), deepColor: .white.opacity(0.72), size: 86, mood: .happy)
+                    MascotView(
+                        color: .white.opacity(0.95),
+                        deepColor: .white.opacity(0.72),
+                        size: 86,
+                        mood: .happy
+                    )
                 }
                 .padding(18)
             }
             .frame(maxWidth: .infinity)
             .background(
-                LinearGradient(colors: [style.base, style.deep], startPoint: .topLeading, endPoint: .bottomTrailing),
+                LinearGradient(
+                    colors: [style.base, style.deep],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
                 in: RoundedRectangle(cornerRadius: 28, style: .continuous)
             )
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
@@ -242,7 +251,9 @@ struct FeedView: View {
     private func toast(_ message: String) {
         toastMessage = message
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
-            if toastMessage == message { toastMessage = nil }
+            if toastMessage == message {
+                toastMessage = nil
+            }
         }
     }
 }
@@ -254,7 +265,9 @@ private struct InviteCardView: View {
     var onAccept: () -> Void
     var onDecline: () -> Void
 
-    private var style: SportStyle { Playful.style(for: invite.sport) }
+    private var style: SportStyle {
+        Playful.style(for: invite.sport)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -321,7 +334,9 @@ private struct PersonCardView: View {
     var onInvite: () -> Void
     var onOpenProfile: () -> Void
 
-    private var style: SportStyle { Playful.style(for: person.sport) }
+    private var style: SportStyle {
+        Playful.style(for: person.sport)
+    }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -414,8 +429,7 @@ private struct ToastView: View {
 extension View {
     /// Staggered fade + rise shared by the playful screens.
     func sectionEntrance(_ appeared: Bool, index: Int) -> some View {
-        self
-            .opacity(appeared ? 1 : 0)
+        opacity(appeared ? 1 : 0)
             .offset(y: appeared ? 0 : 24)
             .animation(
                 .spring(response: 0.55, dampingFraction: 0.82).delay(Double(index) * 0.07),
