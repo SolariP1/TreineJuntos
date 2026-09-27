@@ -11,7 +11,7 @@ enum TrainingDayState: Sendable {
 }
 
 /// Tudo o que aparece no portfólio público de um parceiro.
-struct PartnerPortfolio: Identifiable, Sendable {
+struct PartnerPortfolio: Identifiable, Hashable, Sendable {
     let id: UUID
     let partner: WorkoutPartner
     let bio: String

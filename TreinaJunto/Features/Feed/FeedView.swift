@@ -1,12 +1,11 @@
 import SwiftUI
 
 struct FeedView: View {
-    @State private var people = SampleData.partners
-    @State private var invites = SampleData.invites
-    @State private var invited: Set<UUID> = []
-    @State private var toastMessage: String?
+    @Environment(\.dependencies) private var dependencies
+
+    @State private var model: FeedViewModel?
     @State private var showAvailabilitySheet = false
-    @State private var selectedPartner: WorkoutPartner?
+    @State private var selectedPortfolio: PartnerPortfolio?
     @State private var appeared = false
 
     var body: some View {
@@ -14,53 +13,81 @@ struct FeedView: View {
             ZStack(alignment: .bottom) {
                 Playful.canvas.ignoresSafeArea()
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        greeting.sectionEntrance(appeared, index: 0)
-                        openWorkoutCard.sectionEntrance(appeared, index: 1)
+                if let model {
+                    content(model)
 
-                        if !invites.isEmpty {
-                            inviteSection.sectionEntrance(appeared, index: 2)
-                        }
-
-                        nearbySection.sectionEntrance(appeared, index: 3)
+                    if let message = model.toastMessage {
+                        ToastView(message: message)
+                            .padding(.bottom, 12)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
-                    .padding(.horizontal, 18)
-                    .padding(.top, 8)
-                    // Clears the floating tab bar so the last card is reachable.
-                    .padding(.bottom, 90)
-                }
-
-                if let message = toastMessage {
-                    ToastView(message: message)
-                        .padding(.bottom, 12)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
-            .navigationDestination(item: $selectedPartner) { partner in
-                PartnerPortfolioView(
-                    portfolio: SampleData.portfolio(for: partner),
-                    onInvite: {
-                        invite(partner)
-                        selectedPartner = nil
-                    }
-                )
+            .navigationDestination(item: $selectedPortfolio) { portfolio in
+                PartnerPortfolioView(portfolio: portfolio) {
+                    Task { await model?.invite(portfolio.partner) }
+                    selectedPortfolio = nil
+                }
             }
         }
-        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: toastMessage)
-        .animation(.spring(response: 0.45, dampingFraction: 0.8), value: invites.count)
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: model?.toastMessage)
+        .animation(.spring(response: 0.45, dampingFraction: 0.8), value: model?.invites.count)
         .sheet(isPresented: $showAvailabilitySheet) {
-            MarkAvailabilitySheet(onPublish: { sport, time in
-                toast("Disponibilidade publicada: \(sport) — \(time.lowercased())")
-            })
+            MarkAvailabilitySheet { sport, time in
+                Task { await model?.publishAvailability(sport: sport, when: time) }
+            }
         }
-        .onAppear { appeared = true }
+        .task {
+            // O modelo nasce aqui porque depende do Environment, que não está
+            // disponível na inicialização da View.
+            if model == nil {
+                model = FeedViewModel(
+                    partnerRepository: dependencies.partners,
+                    inviteRepository: dependencies.invites
+                )
+            }
+            await model?.load()
+            appeared = true
+        }
+    }
+
+    @ViewBuilder
+    private func content(_ model: FeedViewModel) -> some View {
+        switch model.partners {
+        case .idle, .loading:
+            ProgressView()
+                .controlSize(.large)
+                .tint(Palette.accent.base)
+
+        case let .failed(message):
+            FeedErrorView(message: message) {
+                Task { await model.load() }
+            }
+
+        case let .loaded(people):
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    greeting(model).sectionEntrance(appeared, index: 0)
+                    openWorkoutCard.sectionEntrance(appeared, index: 1)
+
+                    if !model.invites.isEmpty {
+                        inviteSection(model).sectionEntrance(appeared, index: 2)
+                    }
+
+                    nearbySection(model, people: people).sectionEntrance(appeared, index: 3)
+                }
+                .padding(.horizontal, 18)
+                .padding(.top, 8)
+                // Libera a tab bar flutuante para o último card ser alcançável.
+                .padding(.bottom, 90)
+            }
+        }
     }
 
     // MARK: - Greeting
 
-    private var greeting: some View {
+    private func greeting(_ model: FeedViewModel) -> some View {
         HStack(spacing: 12) {
             ZStack {
                 Circle().fill(Theme.avatarGradients[1])
@@ -86,8 +113,8 @@ struct FeedView: View {
                     .frame(width: 42, height: 42)
                     .background(Playful.surface, in: Circle())
                     .overlay(alignment: .topTrailing) {
-                        if !invites.isEmpty {
-                            Text("\(invites.count)")
+                        if !model.invites.isEmpty {
+                            Text("\(model.invites.count)")
                                 .font(.brand(9, weight: .bold))
                                 .foregroundStyle(.white)
                                 .frame(width: 17, height: 17)
@@ -102,7 +129,7 @@ struct FeedView: View {
         }
     }
 
-    // MARK: - Hero: open a workout
+    // MARK: - Hero: abrir um treino
 
     private var openWorkoutCard: some View {
         let style = Palette.violet
@@ -146,29 +173,22 @@ struct FeedView: View {
                 .padding(18)
             }
             .frame(maxWidth: .infinity)
-            .background(
-                LinearGradient(
-                    colors: [style.base, style.deep],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
-                in: RoundedRectangle(cornerRadius: 28, style: .continuous)
-            )
+            .background(style.gradient, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
             .shadow(color: style.base.opacity(0.35), radius: 20, y: 12)
         }
         .buttonStyle(.pressable)
     }
 
-    // MARK: - Invites
+    // MARK: - Convites
 
-    private var inviteSection: some View {
+    private func inviteSection(_ model: FeedViewModel) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 7) {
                 Text("Convites recebidos")
                     .font(.display(14, weight: .semibold))
                     .foregroundStyle(Playful.ink)
-                Text("\(invites.count)")
+                Text("\(model.invites.count)")
                     .font(.brand(10.5, weight: .bold))
                     .foregroundStyle(.white)
                     .padding(.horizontal, 7).padding(.vertical, 2.5)
@@ -177,11 +197,11 @@ struct FeedView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
-                    ForEach(invites) { invite in
+                    ForEach(model.invites) { invite in
                         InviteCardView(
                             invite: invite,
-                            onAccept: { respond(to: invite, accepted: true) },
-                            onDecline: { respond(to: invite, accepted: false) }
+                            onAccept: { Task { await model.respond(to: invite, accepted: true) } },
+                            onDecline: { Task { await model.respond(to: invite, accepted: false) } }
                         )
                     }
                 }
@@ -190,9 +210,9 @@ struct FeedView: View {
         }
     }
 
-    // MARK: - Nearby
+    // MARK: - Perto de você
 
-    private var nearbySection: some View {
+    private func nearbySection(_ model: FeedViewModel, people: [WorkoutPartner]) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 6) {
                 Image(systemName: "mappin.circle.fill")
@@ -211,9 +231,11 @@ struct FeedView: View {
                 ForEach(Array(people.enumerated()), id: \.element.id) { index, person in
                     PersonCardView(
                         person: person,
-                        isInvited: invited.contains(person.id),
-                        onInvite: { invite(person) },
-                        onOpenProfile: { selectedPartner = person }
+                        isInvited: model.hasInvited(person),
+                        onInvite: { Task { await model.invite(person) } },
+                        onOpenProfile: {
+                            Task { selectedPortfolio = await model.portfolio(for: person) }
+                        }
                     )
                     .scaleEffect(appeared ? 1 : 0.94)
                     .opacity(appeared ? 1 : 0)
@@ -226,215 +248,43 @@ struct FeedView: View {
         }
     }
 
-    // MARK: - Actions
-
     private var todayLabel: String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "pt_BR")
         formatter.dateFormat = "EEEE, d 'de' MMMM"
-        // Only the first letter — `.capitalized` would give "Terça-Feira, 22 De Setembro".
+        // Só a primeira letra — `.capitalized` daria "Terça-Feira, 22 De Setembro".
         let raw = formatter.string(from: Date())
         return raw.prefix(1).uppercased() + raw.dropFirst()
     }
-
-    private func invite(_ person: WorkoutPartner) {
-        guard !invited.contains(person.id) else { return }
-        invited.insert(person.id)
-        toast("Convite enviado para \(person.name)!")
-    }
-
-    private func respond(to invite: IncomingInvite, accepted: Bool) {
-        invites.removeAll { $0.id == invite.id }
-        toast(accepted ? "Combinado com \(invite.name)!" : "Convite de \(invite.name) recusado.")
-    }
-
-    private func toast(_ message: String) {
-        toastMessage = message
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
-            if toastMessage == message {
-                toastMessage = nil
-            }
-        }
-    }
 }
 
-// MARK: - Invite card
-
-private struct InviteCardView: View {
-    let invite: IncomingInvite
-    var onAccept: () -> Void
-    var onDecline: () -> Void
-
-    private var style: SportStyle {
-        invite.sport.style
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 9) {
-                ZStack {
-                    Circle().fill(style.gradient)
-                    Text(invite.initials).font(.display(14)).foregroundStyle(.white)
-                }
-                .frame(width: 40, height: 40)
-
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(invite.name)
-                        .font(.brand(13.5, weight: .bold))
-                        .foregroundStyle(Playful.ink)
-                    HStack(spacing: 4) {
-                        Image(systemName: style.symbol).font(.system(size: 8, weight: .semibold))
-                        Text(invite.sport.label).font(.brand(9.5, weight: .bold))
-                    }
-                    .foregroundStyle(style.deep)
-                    .padding(.horizontal, 7).padding(.vertical, 3)
-                    .background(.white.opacity(0.75), in: Capsule())
-                }
-                Spacer(minLength: 0)
-            }
-
-            Text(invite.when)
-                .font(.brand(11, weight: .medium))
-                .foregroundStyle(Playful.inkMuted)
-                .lineLimit(1)
-
-            HStack(spacing: 8) {
-                Button(action: onDecline) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 12, weight: .bold))
-                        .frame(maxWidth: .infinity, minHeight: 42)
-                }
-                .foregroundStyle(Playful.inkMuted)
-                .background(.white.opacity(0.75), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-                .buttonStyle(.pressable)
-
-                Button(action: onAccept) {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 12, weight: .bold))
-                        .frame(maxWidth: .infinity, minHeight: 42)
-                }
-                .foregroundStyle(.white)
-                .background(style.base, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-                .buttonStyle(.pressable)
-            }
-        }
-        .padding(13)
-        .frame(width: 196)
-        .background(style.soft, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .shadow(color: style.base.opacity(0.18), radius: 14, y: 8)
-        .transition(.scale(scale: 0.85).combined(with: .opacity))
-    }
-}
-
-// MARK: - Person card
-
-private struct PersonCardView: View {
-    let person: WorkoutPartner
-    let isInvited: Bool
-    var onInvite: () -> Void
-    var onOpenProfile: () -> Void
-
-    private var style: SportStyle {
-        person.sport.style
-    }
-
-    var body: some View {
-        HStack(spacing: 12) {
-            // The identity area opens the portfolio; the invite button stays
-            // its own control so the two gestures never fight.
-            Button(action: onOpenProfile) {
-                HStack(spacing: 12) {
-                    ZStack {
-                        BlobShape(phase: CGFloat(person.gradientIndex) * 1.1, lobes: 5, amplitude: 0.08)
-                            .fill(style.base.opacity(0.3))
-                            .frame(width: 58, height: 58)
-                        Circle()
-                            .fill(style.gradient)
-                            .frame(width: 46, height: 46)
-                        Text(person.initials)
-                            .font(.display(16))
-                            .foregroundStyle(.white)
-                    }
-                    .frame(width: 58, height: 58)
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("\(person.name), \(person.age)")
-                            .font(.brand(14.5, weight: .bold))
-                            .foregroundStyle(Playful.ink)
-                        HStack(spacing: 6) {
-                            HStack(spacing: 4) {
-                                Image(systemName: style.symbol).font(.system(size: 9, weight: .semibold))
-                                Text(person.sport.label).font(.brand(10.5, weight: .bold))
-                            }
-                            .foregroundStyle(style.deep)
-                            .padding(.horizontal, 9).padding(.vertical, 5)
-                            .background(.white.opacity(0.8), in: Capsule())
-
-                            Text(person.distanceLabel)
-                                .font(.mono(10.5, weight: .medium))
-                                .foregroundStyle(Playful.inkMuted)
-                        }
-                    }
-
-                    Spacer(minLength: 0)
-                }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.pressable)
-
-            Button(action: onInvite) {
-                Group {
-                    if isInvited {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 14, weight: .bold))
-                    } else {
-                        Image(systemName: "hand.wave.fill")
-                            .font(.system(size: 14, weight: .semibold))
-                    }
-                }
-                .frame(width: 46, height: 46)
-            }
-            .foregroundStyle(isInvited ? style.deep : .white)
-            .background(
-                isInvited ? AnyShapeStyle(.white.opacity(0.9)) : AnyShapeStyle(style.base),
-                in: RoundedRectangle(cornerRadius: 15, style: .continuous)
-            )
-            .disabled(isInvited)
-            .buttonStyle(.pressable)
-        }
-        .padding(13)
-        .background(style.soft, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .shadow(color: style.base.opacity(0.18), radius: 16, y: 8)
-    }
-}
-
-// MARK: - Toast
-
-private struct ToastView: View {
+/// O que aparece quando o Feed não consegue carregar.
+private struct FeedErrorView: View {
     let message: String
+    var onRetry: () -> Void
 
     var body: some View {
-        HStack(spacing: 8) {
-            Circle().fill(Palette.mint.base).frame(width: 7, height: 7)
-            Text(message)
-                .font(.brand(12.5, weight: .semibold))
-        }
-        .foregroundStyle(.white)
-        .padding(.horizontal, 16).padding(.vertical, 12)
-        .background(Playful.ink, in: Capsule())
-        .shadow(color: .black.opacity(0.25), radius: 16, y: 8)
-    }
-}
-
-extension View {
-    /// Staggered fade + rise shared by the playful screens.
-    func sectionEntrance(_ appeared: Bool, index: Int) -> some View {
-        opacity(appeared ? 1 : 0)
-            .offset(y: appeared ? 0 : 24)
-            .animation(
-                .spring(response: 0.55, dampingFraction: 0.82).delay(Double(index) * 0.07),
-                value: appeared
+        VStack(spacing: 16) {
+            MascotView(
+                color: Palette.orange.base,
+                deepColor: Palette.orange.deep,
+                size: 100,
+                mood: .sleepy
             )
+
+            Text(message)
+                .font(.brand(13))
+                .foregroundStyle(Playful.inkMuted)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
+
+            Button("Tentar de novo", action: onRetry)
+                .font(.brand(13.5, weight: .bold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 20).padding(.vertical, 12)
+                .background(Palette.accent.base, in: Capsule())
+                .buttonStyle(.pressable)
+        }
     }
 }
 
