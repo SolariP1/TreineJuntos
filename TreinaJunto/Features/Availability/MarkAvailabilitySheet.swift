@@ -3,17 +3,17 @@ import SwiftUI
 /// Lets the user broadcast that they're free to train right now, so they
 /// show up to nearby people instead of only being able to invite others.
 struct MarkAvailabilitySheet: View {
-    var onPublish: (String, String) -> Void
+    var onPublish: (Sport, String) -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @State private var selectedSport = "Corrida"
+    @State private var selectedSport: Sport = .corrida
     @State private var selectedTime = "Agora"
 
     private let timeOptions = ["Agora", "Em 30 min", "Em 1h", "Mais tarde"]
 
     private var resumo: String {
         "Quem estiver perto de você vai ver que está disponível pra treinar "
-            + "\(selectedSport.lowercased()) — \(selectedTime.lowercased())."
+            + "\(selectedSport.label.lowercased()) — \(selectedTime.lowercased())."
     }
 
     private let columns = [GridItem(.adaptive(minimum: 100), spacing: 8)]
@@ -27,8 +27,8 @@ struct MarkAvailabilitySheet: View {
                             .font(.brand(13, weight: .bold))
                             .foregroundStyle(Theme.inkFaint)
                         LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
-                            ForEach(availableSports, id: \.self) { sport in
-                                ChoiceChip(label: sport, isSelected: sport == selectedSport) {
+                            ForEach(Sport.allCases, id: \.self) { sport in
+                                ChoiceChip(label: sport.label, isSelected: sport == selectedSport) {
                                     withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
                                         selectedSport = sport
                                     }

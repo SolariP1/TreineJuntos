@@ -10,7 +10,7 @@ struct MainTabView: View {
 
             PlaceholderView(
                 mood: .happy,
-                sport: "Funcional",
+                sport: .funcional,
                 title: "Busca por esporte",
                 message: "Filtre por modalidade, horário e distância. Chegando em breve."
             )
@@ -18,7 +18,7 @@ struct MainTabView: View {
 
             PlaceholderView(
                 mood: .sleepy,
-                sport: "Natação",
+                sport: .natacao,
                 title: "Nenhuma conversa ainda",
                 message: "Convide alguém no Feed — quando aceitar, a conversa aparece aqui."
             )
@@ -27,18 +27,18 @@ struct MainTabView: View {
             ProfileView(onLogout: onLogout)
                 .tabItem { Label("Perfil", systemImage: "person.fill") }
         }
-        .tint(Playful.style(for: "Corrida").base)
+        .tint(Palette.accent.base)
     }
 }
 
 struct PlaceholderView: View {
     let mood: MascotView.Mood
-    let sport: String
+    let sport: Sport
     let title: String
     let message: String
 
     private var style: SportStyle {
-        Playful.style(for: sport)
+        sport.style
     }
 
     var body: some View {

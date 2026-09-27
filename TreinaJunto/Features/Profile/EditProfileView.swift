@@ -47,8 +47,8 @@ struct EditProfileView: View {
                     VStack(alignment: .leading, spacing: 10) {
                         eyebrow("Esportes")
                         FlowLayout(spacing: 8) {
-                            ForEach(availableSports, id: \.self) { sport in
-                                ToggleChip(label: sport, isOn: draft.sports.contains(sport)) {
+                            ForEach(Sport.allCases, id: \.self) { sport in
+                                ToggleChip(label: sport.label, isOn: draft.sports.contains(sport)) {
                                     toggle(sport, in: &draft.sports)
                                 }
                             }
@@ -319,7 +319,7 @@ struct EditProfileView: View {
             .foregroundStyle(Theme.inkFaint)
     }
 
-    private func toggle(_ value: String, in array: inout [String]) {
+    private func toggle<T: Equatable>(_ value: T, in array: inout [T]) {
         if let idx = array.firstIndex(of: value) {
             array.remove(at: idx)
         } else {

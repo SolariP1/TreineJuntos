@@ -114,18 +114,18 @@ private struct SmileShape: Shape {
 #Preview {
     HStack(spacing: 20) {
         MascotView(
-            color: Playful.style(for: "Corrida").base,
-            deepColor: Playful.style(for: "Corrida").deep,
+            color: Sport.corrida.style.base,
+            deepColor: Sport.corrida.style.deep,
             mood: .happy
         )
         MascotView(
-            color: Playful.style(for: "Musculação").base,
-            deepColor: Playful.style(for: "Musculação").deep,
+            color: Sport.musculacao.style.base,
+            deepColor: Sport.musculacao.style.deep,
             mood: .cheer
         )
         MascotView(
-            color: Playful.style(for: "Natação").base,
-            deepColor: Playful.style(for: "Natação").deep,
+            color: Sport.natacao.style.base,
+            deepColor: Sport.natacao.style.deep,
             mood: .sleepy
         )
     }
