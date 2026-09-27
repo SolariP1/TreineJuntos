@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualidade:
+    name: Qualidade de código
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar ferramentas
+        run: brew install swiftlint swiftformat
+
+      - name: Verificar formatação
+        run: swiftformat --lint . --reporter github-actions-log
+
+      - name: Analisar código
+        run: swiftlint lint --strict --reporter github-actions-logging
+
+  testes:
+    name: Build e testes
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar XcodeGen
+        run: brew install xcodegen xcbeautify
+
+      - name: Gerar o projeto
+        run: xcodegen generate
+
+      # O nome do iPhone disponível muda a cada imagem do runner, então
+      # descobrimos em vez de fixar — senão o CI quebra sozinho quando a
+      # GitHub atualiza o Xcode.
+      - name: Escolher simulador
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available --json \
+            | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];print(next(x['udid'] for r in sorted(d) for x in d[r] if 'iPhone' in x['name']))")
+          echo "Simulador: $UDID"
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Rodar testes
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project TreinaJunto.xcodeproj \
+            -scheme TreinaJunto \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -enableCodeCoverage YES \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcbeautify
+
+      - name: Publicar resultado
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resultado-dos-testes
+          path: TestResults.xcresult
+          retention-days: 7
+
+  mensagens:
+    name: Padrão das mensagens de commit
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Roda o mesmo hook que valida localmente — uma regra só, um lugar só.
+      - name: Validar commits do PR
+        run: |
+          chmod +x .githooks/commit-msg
+          FALHOU=0
+          for SHA in $(git rev-list ${{ github.event.pull_request.base.sha }}..HEAD); do
+            git log -1 --format=%B "$SHA" > /tmp/msg
+            if ! ./.githooks/commit-msg /tmp/msg; then
+              echo "::error::Commit $SHA fora do padrão"
+              FALHOU=1
+            fi
+          done
+          exit $FALHOU
