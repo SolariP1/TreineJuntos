@@ -1,0 +1,63 @@
+#!/bin/bash
+# Valida a mensagem de commit contra o padrão de CONVENTIONS.md §1.2.
+# Instale com: ./scripts/setup-hooks.sh
+
+set -uo pipefail
+
+MSG_FILE="$1"
+SUBJECT=$(head -1 "$MSG_FILE")
+
+# Deixa passar merge, revert e commits de fixup/squash.
+case "$SUBJECT" in
+    Merge*|Revert*|fixup!*|squash!*) exit 0 ;;
+esac
+
+TIPOS="feat|fix|refactor|style|perf|test|docs|build|chore"
+ESCOPOS="feed|perfil|onboarding|portfolio|convites|disponibilidade|chat|busca|tema|core|ci|deps"
+
+falhar() {
+    echo ""
+    echo "  ✖ Mensagem de commit fora do padrão do projeto."
+    echo ""
+    echo "    $SUBJECT"
+    echo ""
+    echo "  $1"
+    echo ""
+    echo "  Formato:  <tipo>(<escopo>): <assunto>"
+    echo "  Tipos:    $TIPOS"
+    echo "  Escopos:  $ESCOPOS"
+    echo "  Exemplo:  feat(convites): descontar convite ao iniciar treino"
+    echo ""
+    echo "  Detalhes em CONVENTIONS.md §1."
+    echo ""
+    exit 1
+}
+
+if ! [[ "$SUBJECT" =~ ^($TIPOS)\(($ESCOPOS)\):\ .+ ]]; then
+    falhar "Não bate com <tipo>(<escopo>): <assunto>."
+fi
+
+ASSUNTO="${SUBJECT#*): }"
+
+if [ ${#SUBJECT} -gt 72 ]; then
+    falhar "Assunto com ${#SUBJECT} caracteres — o limite é 72."
+fi
+
+if [[ "$ASSUNTO" =~ \.$ ]]; then
+    falhar "O assunto não termina com ponto final."
+fi
+
+if [[ "$ASSUNTO" =~ ^[A-ZÁÉÍÓÚÂÊÔÃÕÇ] ]]; then
+    falhar "O assunto começa em minúsculo."
+fi
+
+# Regra do projeto: o histórico é do autor humano (CONVENTIONS.md §1.1).
+if grep -qiE '^(Co-Authored-By|Co-authored-by).*(claude|anthropic|copilot|cursor)' "$MSG_FILE"; then
+    falhar "Co-autor de ferramenta de IA não é permitido neste projeto."
+fi
+
+if grep -qiE 'Generated with .*(Claude|Copilot)|🤖' "$MSG_FILE"; then
+    falhar "Rodapé de ferramenta de IA não é permitido neste projeto."
+fi
+
+exit 0

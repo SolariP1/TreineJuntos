@@ -1,0 +1,67 @@
+# Análise estática — CONVENTIONS.md §6
+included:
+  - TreinaJunto
+  - Tests
+
+excluded:
+  - DerivedData
+  - .build
+  - TreinaJunto/Fonts
+
+disabled_rules:
+  - trailing_whitespace      # o swiftformat já resolve
+  - todo                     # TODO.md é parte do fluxo do projeto
+
+opt_in_rules:
+  - empty_count
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - first_where
+  - last_where
+  - contains_over_first_not_nil
+  - redundant_nil_coalescing
+  - unused_import
+  - unneeded_parentheses_in_closure_argument
+  - explicit_init
+  - closure_spacing
+  - vertical_parameter_alignment_on_call
+  - multiline_arguments
+  - sorted_first_last
+  - toggle_bool
+  - joined_default_parameter
+
+line_length:
+  warning: 110
+  error: 160
+  ignores_comments: true
+  ignores_urls: true
+
+# Views SwiftUI são naturalmente longas; o limite existe para avisar quando
+# uma View virou duas. Quando estourar, extraia um subcomponente.
+type_body_length:
+  warning: 260
+  error: 420
+
+file_length:
+  warning: 400
+  error: 700
+  ignore_comment_only_lines: true
+
+function_body_length:
+  warning: 70
+  error: 130
+
+cyclomatic_complexity:
+  warning: 10
+  error: 18
+
+identifier_name:
+  min_length: 2
+  excluded: [id, x, y, i, n, to, up]
+
+nesting:
+  type_level: 2
+
+force_cast: error
+force_try: error
+force_unwrapping: error

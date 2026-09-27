@@ -1,0 +1,50 @@
+#!/bin/bash
+# Formata e analisa o Swift que está sendo commitado.
+# Pula silenciosamente as ferramentas que não estiverem instaladas.
+# Instale com: ./scripts/setup-hooks.sh
+
+set -uo pipefail
+
+ARQUIVOS=$(git diff --cached --name-only --diff-filter=ACM | grep '\.swift$' || true)
+[ -z "$ARQUIVOS" ] && exit 0
+
+FALHOU=0
+
+if command -v swiftformat >/dev/null 2>&1; then
+    echo "  › swiftformat"
+    echo "$ARQUIVOS" | while IFS= read -r f; do
+        [ -f "$f" ] && swiftformat "$f" --quiet
+    done
+    # Reindexa o que o formatador mudou, para o commit sair já formatado.
+    echo "$ARQUIVOS" | while IFS= read -r f; do
+        [ -f "$f" ] && git add "$f"
+    done
+else
+    echo "  › swiftformat não instalado, pulando (brew install swiftformat)"
+fi
+
+if command -v swiftlint >/dev/null 2>&1; then
+    echo "  › swiftlint"
+    if ! echo "$ARQUIVOS" | xargs swiftlint lint --quiet --strict --; then
+        FALHOU=1
+    fi
+else
+    echo "  › swiftlint não instalado, pulando (brew install swiftlint)"
+fi
+
+# Nada de depuração esquecida no que vai para o histórico (CONVENTIONS.md §6).
+VAZAMENTOS=$(echo "$ARQUIVOS" | xargs grep -nE '^\s*(print\(|dump\()' 2>/dev/null || true)
+if [ -n "$VAZAMENTOS" ]; then
+    echo ""
+    echo "  ✖ print()/dump() de depuração encontrado:"
+    echo "$VAZAMENTOS" | sed 's/^/      /'
+    echo ""
+    FALHOU=1
+fi
+
+if [ "$FALHOU" -ne 0 ]; then
+    echo "  Commit interrompido. Corrija os pontos acima (ou use --no-verify se souber o que está fazendo)."
+    exit 1
+fi
+
+exit 0

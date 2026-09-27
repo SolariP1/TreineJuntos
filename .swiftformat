@@ -1,0 +1,14 @@
+# Formatação — CONVENTIONS.md §6
+--swiftversion 5.9
+--indent 4
+--maxwidth 110
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections preserve
+--closingparen balanced
+--commas inline
+--trimwhitespace always
+--stripunusedargs closure-only
+--self remove
+--importgrouping testable-bottom
+--exclude DerivedData,.build,Tests/**/__Snapshots__
