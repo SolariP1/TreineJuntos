@@ -25,7 +25,7 @@ jobs:
         run: swiftformat --lint . --reporter github-actions-log
 
       - name: Analisar código
-        run: swiftlint lint --baseline .swiftlint-baseline.json --strict --reporter github-actions-logging
+        run: swiftlint lint --strict --reporter github-actions-logging
 
   testes:
     name: Build e testes
