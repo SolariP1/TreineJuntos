@@ -354,5 +354,5 @@ private struct ToggleChip: View {
 }
 
 #Preview {
-    EditProfileView(profile: .constant(UserProfile()))
+    EditProfileView(profile: .constant(SampleData.profile))
 }
