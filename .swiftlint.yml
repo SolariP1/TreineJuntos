@@ -68,5 +68,6 @@ force_unwrapping: error
 # Dívida técnica registrada em .swiftlint-baseline.json: as Views grandes que
 # existem hoje. A baseline não perdoa violação nova — ela só impede que o CI
 # fique vermelho por dívida antiga enquanto a arquitetura é reorganizada.
-# Depois de quebrar uma View, regenere com:
+# A baseline guarda o CAMINHO de cada violação, então ela invalida tanto ao
+# quebrar uma View quanto ao MOVER um arquivo. Nos dois casos, regenere:
 #   swiftlint lint --write-baseline .swiftlint-baseline.json
