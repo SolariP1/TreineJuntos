@@ -51,6 +51,7 @@ docs/releases/         nota de cada versão
 .github/workflows/     CI
 CONVENTIONS.md         padrões do projeto — leia antes de commitar
 docs/ARQUITETURA.md    diagnóstico e plano de migração
+docs/PRODUTO.md        ciclo do treino, party e convites
 TODO.md                backlog
 ```
 
