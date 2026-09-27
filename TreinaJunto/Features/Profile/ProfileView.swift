@@ -12,7 +12,7 @@ struct ProfileView: View {
     @Namespace private var photoNamespace
 
     private var style: SportStyle {
-        Playful.style(for: profile.sports.first ?? "Corrida")
+        (profile.sports.first ?? .corrida).style
     }
 
     var body: some View {
@@ -25,7 +25,7 @@ struct ProfileView: View {
                     statsStrip.sectionEntrance(appeared, index: 1)
                     badgesStrip.sectionEntrance(appeared, index: 2)
                     photosCard.sectionEntrance(appeared, index: 3)
-                    if profile.sports.contains("Musculação") {
+                    if profile.sports.contains(.musculacao) {
                         routineCard.sectionEntrance(appeared, index: 4)
                     }
                     interestsCard.sectionEntrance(appeared, index: 5)
@@ -209,14 +209,14 @@ struct ProfileView: View {
                 suffix: "",
                 label: "treinos",
                 symbol: "figure.run.circle.fill",
-                color: Playful.style(for: "Corrida").base
+                color: Palette.orange.base
             )
             statTile(
                 value: statsRevealed ? profile.partners : 0,
                 suffix: "",
                 label: "parceiros",
                 symbol: "person.2.fill",
-                color: Playful.style(for: "Musculação").base
+                color: Palette.violet.base
             )
             ratingTile
         }
@@ -248,7 +248,7 @@ struct ProfileView: View {
         VStack(spacing: 6) {
             Image(systemName: "star.fill")
                 .font(.system(size: 17))
-                .foregroundStyle(Playful.style(for: "Ciclismo").base)
+                .foregroundStyle(Palette.amber.base)
             Text(profile.rating)
                 .font(.mono(19, weight: .bold))
                 .foregroundStyle(Playful.ink)
@@ -258,7 +258,7 @@ struct ProfileView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
-        .playfulCard(Playful.surface, radius: 22, tint: Playful.style(for: "Ciclismo").base)
+        .playfulCard(Playful.surface, radius: 22, tint: Palette.amber.base)
     }
 
     // MARK: - Badges
@@ -268,12 +268,13 @@ struct ProfileView: View {
             HStack(spacing: 8) {
                 ForEach(Array(earnedBadges.enumerated()), id: \.offset) { index, badge in
                     HStack(spacing: 6) {
-                        Image(systemName: badge.0).font(.system(size: 12)).foregroundStyle(badge.2.base)
-                        Text(badge.1).font(.brand(11.5, weight: .bold)).foregroundStyle(badge.2.deep)
+                        Image(systemName: badge.symbol).font(.system(size: 12))
+                            .foregroundStyle(badge.ramp.base)
+                        Text(badge.label).font(.brand(11.5, weight: .bold)).foregroundStyle(badge.ramp.deep)
                     }
                     .padding(.horizontal, 12).padding(.vertical, 9)
-                    .background(badge.2.soft, in: Capsule())
-                    .overlay(Capsule().stroke(badge.2.base.opacity(0.25), lineWidth: 1))
+                    .background(badge.ramp.soft, in: Capsule())
+                    .overlay(Capsule().stroke(badge.ramp.base.opacity(0.25), lineWidth: 1))
                     .rotationEffect(.degrees(index % 2 == 0 ? -1.5 : 1.5))
                     .scaleEffect(appeared ? 1 : 0.7)
                     .opacity(appeared ? 1 : 0)
@@ -288,12 +289,12 @@ struct ProfileView: View {
         }
     }
 
-    private var earnedBadges: [(String, String, SportStyle)] {
+    private var earnedBadges: [Badge] {
         [
-            ("flame.fill", "7 dias seguidos", Playful.style(for: "Corrida")),
-            ("checkmark.seal.fill", "Sempre aparece", Playful.style(for: "Funcional")),
-            ("sunrise.fill", "Madrugador", Playful.style(for: "Yoga")),
-            ("medal.fill", "Veterano", Playful.style(for: "Ciclismo"))
+            Badge(symbol: "flame.fill", label: "7 dias seguidos", ramp: Palette.orange),
+            Badge(symbol: "checkmark.seal.fill", label: "Sempre aparece", ramp: Palette.mint),
+            Badge(symbol: "sunrise.fill", label: "Madrugador", ramp: Palette.pink),
+            Badge(symbol: "medal.fill", label: "Veterano", ramp: Palette.amber)
         ]
     }
 
@@ -364,7 +365,7 @@ struct ProfileView: View {
     // MARK: - Routine
 
     private var routineCard: some View {
-        let musc = Playful.style(for: "Musculação")
+        let musc = Palette.violet
 
         return VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -425,10 +426,10 @@ struct ProfileView: View {
 
             FlowLayout(spacing: 7) {
                 ForEach(profile.sports, id: \.self) { sport in
-                    let sportStyle = Playful.style(for: sport)
+                    let sportStyle = sport.style
                     HStack(spacing: 5) {
                         Image(systemName: sportStyle.symbol).font(.system(size: 9.5, weight: .semibold))
-                        Text(sport).font(.brand(11.5, weight: .bold))
+                        Text(sport.label).font(.brand(11.5, weight: .bold))
                     }
                     .foregroundStyle(sportStyle.deep)
                     .padding(.horizontal, 11).padding(.vertical, 7)
@@ -461,9 +462,9 @@ struct ProfileView: View {
                     Image(systemName: "star.fill").font(.system(size: 11))
                     Text(profile.rating).font(.mono(12, weight: .bold))
                 }
-                .foregroundStyle(Playful.style(for: "Ciclismo").deep)
+                .foregroundStyle(Palette.amber.deep)
                 .padding(.horizontal, 9).padding(.vertical, 5)
-                .background(Playful.style(for: "Ciclismo").soft, in: Capsule())
+                .background(Palette.amber.soft, in: Capsule())
             }
 
             VStack(spacing: 10) {
@@ -484,7 +485,7 @@ struct ProfileView: View {
                                     ForEach(0 ..< 5, id: \.self) { index in
                                         Image(systemName: index < review.rating ? "star.fill" : "star")
                                             .font(.system(size: 8))
-                                            .foregroundStyle(Playful.style(for: "Ciclismo").base)
+                                            .foregroundStyle(Palette.amber.base)
                                     }
                                 }
                             }

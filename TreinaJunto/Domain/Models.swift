@@ -4,7 +4,7 @@ struct WorkoutPartner: Identifiable, Hashable {
     let id = UUID()
     let name: String
     let age: Int
-    let sport: String
+    let sport: Sport
     let distance: String
     let gradientIndex: Int
 
@@ -19,17 +19,17 @@ struct WorkoutPartner: Identifiable, Hashable {
 
 extension WorkoutPartner {
     static let sample: [WorkoutPartner] = [
-        WorkoutPartner(name: "Marina", age: 27, sport: "Corrida", distance: "450m", gradientIndex: 0),
-        WorkoutPartner(name: "Lucas", age: 24, sport: "Musculação", distance: "800m", gradientIndex: 1),
-        WorkoutPartner(name: "Beatriz", age: 30, sport: "Funcional", distance: "1.2km", gradientIndex: 2),
-        WorkoutPartner(name: "Rafael", age: 26, sport: "Ciclismo", distance: "1.5km", gradientIndex: 3)
+        WorkoutPartner(name: "Marina", age: 27, sport: .corrida, distance: "450m", gradientIndex: 0),
+        WorkoutPartner(name: "Lucas", age: 24, sport: .musculacao, distance: "800m", gradientIndex: 1),
+        WorkoutPartner(name: "Beatriz", age: 30, sport: .funcional, distance: "1.2km", gradientIndex: 2),
+        WorkoutPartner(name: "Rafael", age: 26, sport: .ciclismo, distance: "1.5km", gradientIndex: 3)
     ]
 }
 
 struct IncomingInvite: Identifiable {
     let id = UUID()
     let name: String
-    let sport: String
+    let sport: Sport
     let when: String
     let gradientIndex: Int
 
@@ -44,9 +44,9 @@ struct IncomingInvite: Identifiable {
 
 extension IncomingInvite {
     static let sample: [IncomingInvite] = [
-        IncomingInvite(name: "Camila", sport: "Corrida", when: "hoje às 7h", gradientIndex: 2),
-        IncomingInvite(name: "Thiago", sport: "Funcional", when: "amanhã às 18h", gradientIndex: 3),
-        IncomingInvite(name: "Ana", sport: "Ciclismo", when: "sábado de manhã", gradientIndex: 0)
+        IncomingInvite(name: "Camila", sport: .corrida, when: "hoje às 7h", gradientIndex: 2),
+        IncomingInvite(name: "Thiago", sport: .funcional, when: "amanhã às 18h", gradientIndex: 3),
+        IncomingInvite(name: "Ana", sport: .ciclismo, when: "sábado de manhã", gradientIndex: 0)
     ]
 }
 
@@ -72,7 +72,7 @@ struct PartnerPortfolio: Identifiable {
     /// % of opened workouts they actually showed up to.
     let reliability: Int
     let rating: String
-    let sports: [String]
+    let sports: [Sport]
     let interests: [String]
     let weeklySplit: [WorkoutDay]
     let reviews: [Review]
@@ -124,7 +124,7 @@ extension PartnerPortfolio {
             totalTrainings: 14 + (seed % 40),
             reliability: reliability,
             rating: ["4.9", "4.7", "5.0", "4.6"][seed % 4],
-            sports: [partner.sport] + (seed % 2 == 0 ? ["Funcional"] : ["Musculação"]),
+            sports: [partner.sport] + (seed % 2 == 0 ? [.funcional] : [.musculacao]),
             interests: [
                 ["Treino matinal", "Parceiro fixo", "Nível intermediário"],
                 ["Treino noturno", "Foco em resistência", "Grupo/comunidade"],
@@ -159,8 +159,6 @@ extension PartnerPortfolio {
         )
     }
 }
-
-let availableSports = ["Corrida", "Musculação", "Funcional", "Ciclismo", "Yoga", "Natação"]
 
 let availableInterests = [
     "Treino matinal", "Treino noturno", "Parceiro fixo",
@@ -200,7 +198,7 @@ struct UserProfile {
     var trainings = 23
     var partners = 12
     var rating = "4.9"
-    var sports = ["Corrida", "Funcional", "Musculação"]
+    var sports: [Sport] = [.corrida, .funcional, .musculacao]
 
     var trainingInterests = ["Treino matinal", "Parceiro fixo", "Nível intermediário", "Foco em hipertrofia"]
 

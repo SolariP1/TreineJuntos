@@ -91,7 +91,7 @@ struct FeedView: View {
                                 .font(.brand(9, weight: .bold))
                                 .foregroundStyle(.white)
                                 .frame(width: 17, height: 17)
-                                .background(Playful.style(for: "Corrida").base, in: Circle())
+                                .background(Palette.accent.base, in: Circle())
                                 .overlay(Circle().stroke(Playful.canvas, lineWidth: 2))
                                 .offset(x: 3, y: -3)
                         }
@@ -105,7 +105,7 @@ struct FeedView: View {
     // MARK: - Hero: open a workout
 
     private var openWorkoutCard: some View {
-        let style = Playful.style(for: "Musculação")
+        let style = Palette.violet
 
         return Button { showAvailabilitySheet = true } label: {
             ZStack(alignment: .topLeading) {
@@ -172,7 +172,7 @@ struct FeedView: View {
                     .font(.brand(10.5, weight: .bold))
                     .foregroundStyle(.white)
                     .padding(.horizontal, 7).padding(.vertical, 2.5)
-                    .background(Playful.style(for: "Corrida").base, in: Capsule())
+                    .background(Palette.accent.base, in: Capsule())
             }
 
             ScrollView(.horizontal, showsIndicators: false) {
@@ -197,7 +197,7 @@ struct FeedView: View {
             HStack(spacing: 6) {
                 Image(systemName: "mappin.circle.fill")
                     .font(.system(size: 14))
-                    .foregroundStyle(Playful.style(for: "Corrida").base)
+                    .foregroundStyle(Palette.accent.base)
                 Text("Perto de você")
                     .font(.display(14, weight: .semibold))
                     .foregroundStyle(Playful.ink)
@@ -266,7 +266,7 @@ private struct InviteCardView: View {
     var onDecline: () -> Void
 
     private var style: SportStyle {
-        Playful.style(for: invite.sport)
+        invite.sport.style
     }
 
     var body: some View {
@@ -284,7 +284,7 @@ private struct InviteCardView: View {
                         .foregroundStyle(Playful.ink)
                     HStack(spacing: 4) {
                         Image(systemName: style.symbol).font(.system(size: 8, weight: .semibold))
-                        Text(invite.sport).font(.brand(9.5, weight: .bold))
+                        Text(invite.sport.label).font(.brand(9.5, weight: .bold))
                     }
                     .foregroundStyle(style.deep)
                     .padding(.horizontal, 7).padding(.vertical, 3)
@@ -335,7 +335,7 @@ private struct PersonCardView: View {
     var onOpenProfile: () -> Void
 
     private var style: SportStyle {
-        Playful.style(for: person.sport)
+        person.sport.style
     }
 
     var body: some View {
@@ -364,7 +364,7 @@ private struct PersonCardView: View {
                         HStack(spacing: 6) {
                             HStack(spacing: 4) {
                                 Image(systemName: style.symbol).font(.system(size: 9, weight: .semibold))
-                                Text(person.sport).font(.brand(10.5, weight: .bold))
+                                Text(person.sport.label).font(.brand(10.5, weight: .bold))
                             }
                             .foregroundStyle(style.deep)
                             .padding(.horizontal, 9).padding(.vertical, 5)
@@ -415,7 +415,7 @@ private struct ToastView: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Circle().fill(Playful.style(for: "Funcional").base).frame(width: 7, height: 7)
+            Circle().fill(Palette.mint.base).frame(width: 7, height: 7)
             Text(message)
                 .font(.brand(12.5, weight: .semibold))
         }

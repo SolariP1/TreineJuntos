@@ -8,10 +8,13 @@ struct UserProfileTests {
         #expect(Fixtures.profile().photos.isEmpty)
     }
 
-    @Test("Os esportes do perfil existem no catálogo do app")
-    func sportsComeFromTheCatalogue() {
-        for esporte in Fixtures.profile().sports {
-            #expect(availableSports.contains(esporte))
+    @Test("Todo esporte tem nome, cor e ícone para desenhar")
+    func everySportCanBeDrawn() {
+        // O catálogo agora é o próprio enum, então o que vale testar é que
+        // nenhum caso ficou sem apresentação ao ser adicionado.
+        for esporte in Sport.allCases {
+            #expect(!esporte.label.isEmpty)
+            #expect(!esporte.symbol.isEmpty)
         }
     }
 
