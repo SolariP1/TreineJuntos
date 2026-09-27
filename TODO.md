@@ -16,8 +16,14 @@ O refactor de arquitetura que sustenta tudo isso está em
 Sem isso, nenhuma feature de produto se sustenta.
 
 - [x] ~~Sessão e "quem sou eu" acessível de qualquer tela~~ — feito na v0.8.0
-      (`AppSession`). Falta a autenticação de verdade: os três botões ainda
-      só registram por onde a pessoa entrou, sem verificar nada.
+      (`AppSession`).
+- [ ] **Sign in with Apple de verdade.** Decidido em 27/09. Google e e-mail
+      ficam desabilitados até haver servidor.
+- [ ] **CPF no cadastro, guardado como hash.** Decidido em 27/09: garante uma
+      conta por pessoa sem o banco ter o número. O hash é calculado no
+      servidor, com pepper que não sai de lá. Ver [PRODUTO.md §4.2](docs/PRODUTO.md).
+- [ ] **Verificação de telefone por SMS**, junto do CPF. O CPF garante
+      unicidade; o telefone prova posse no momento do cadastro.
 - [ ] **Onboarding que coleta.** Os botões entram, mas não perguntam nome,
       cidade, academia nem esportes — o perfil ainda nasce do exemplo.
 - [x] ~~Persistir perfil e sessão~~ — feito na v0.8.0 (SwiftData + UserDefaults).
@@ -38,6 +44,29 @@ Sem isso, nenhuma feature de produto se sustenta.
 
 ## Produto
 
+> **Decisões de 27/09** em [docs/PRODUTO.md](docs/PRODUTO.md): ciclo do
+> treino em três estados, party, os dois tipos de convite e o esboço do banco.
+
+### Ciclo do treino
+
+- [ ] **Abrir treino** — o que hoje é "marcar disponibilidade" vira registro
+      de verdade, que aparece para quem está perto e recebe convites.
+- [ ] **Iniciar treino** — momento separado, depois de aberto. É aqui que o
+      convite de academia é descontado.
+- [ ] **Live Activity** no topo da tela e na Dynamic Island, como o iFood: a
+      pessoa sai do app e o treino continua visível. Exige um target de
+      Widget Extension e push pelo APNs.
+- [ ] **Fotos e comentários** dentro do treino iniciado, entre participantes.
+- [ ] **Encerrar treino** — o gancho que falta para confirmar presença e
+      avaliar.
+- [ ] **Party**: treino com mais de duas pessoas, modelado como sessão com
+      participantes desde o começo. Tamanho escolhido pelo anfitrião,
+      **de 2 a 6, padrão 2** (decidido em 27/09).
+- [ ] **Avisar que a party gasta convites.** Party de 4 na própria academia
+      consome 3 convites, um por visitante — então o limite real costuma ser
+      o saldo do mês. A tela de abrir precisa dizer isso ali, não deixar a
+      pessoa descobrir no portão.
+
 ### Academia e convites (sua ideia de 23/09)
 
 - [ ] Campo `gym` no perfil, ao lado da cidade.
@@ -47,14 +76,13 @@ Sem isso, nenhuma feature de produto se sustenta.
 - [ ] Se sim: quantos o plano dá e quantos ainda restam.
 - [ ] Ao iniciar um treino, perguntar "vai usar um convite?" — e descontar 1 se
       a resposta for sim. Quem não tem convite não vê pergunta nenhuma.
-- [ ] Exibir no Feed os convites disponíveis e a academia.
+- [ ] Exibir no card do Feed **os convites da outra pessoa** e a academia dela.
 
-> **Decisões em aberto** (levantadas em 23/09, ainda de pé):
-> - O saldo zera todo mês junto com o plano, ou é total fixo?
-> - "Iniciar um treino" é marcar disponibilidade, ou um momento separado?
-> - Os convites no Feed são os **meus** ou os de cada parceiro listado?
->   Esta terceira muda a feature inteira: se for a dos outros, o app ganha
->   uma mecânica nova — *quem pode me levar na academia dele*.
+> **Respondidas em 27/09:** o saldo **zera todo mês**, calculado a partir do
+> registro de uso em vez de zerado por tarefa agendada (PRODUTO.md §3.2);
+> "iniciar treino" é **momento separado**, depois de abrir; e o Feed mostra
+> os convites **das outras pessoas** — *quem pode me levar na academia dele*.
+> O meu saldo fica no meu perfil, junto do cadastro do plano.
 
 ### Defeitos encontrados
 
