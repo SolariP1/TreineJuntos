@@ -14,17 +14,20 @@ struct AppDependencies: Sendable {
     let partners: PartnerRepository
     let invites: InviteRepository
     let profiles: ProfileRepository
+    let workouts: WorkoutRepository
     let session: SessionStore
 
     init(
         partners: PartnerRepository = InMemoryPartnerRepository(),
         invites: InviteRepository = InMemoryInviteRepository(),
         profiles: ProfileRepository = InMemoryProfileRepository(),
+        workouts: WorkoutRepository = InMemoryWorkoutRepository(),
         session: SessionStore = UserDefaultsSessionStore()
     ) {
         self.partners = partners
         self.invites = invites
         self.profiles = profiles
+        self.workouts = workouts
         self.session = session
     }
 

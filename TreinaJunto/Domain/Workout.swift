@@ -168,4 +168,8 @@ enum WorkoutError: Error, Equatable {
     case cannotCancelAfterStart
     /// A party ficou maior do que o saldo de convites do anfitrião permite.
     case notEnoughInvites(needed: Int, available: Int)
+    /// Já existe um treino meu de pé. Dois ao mesmo tempo deixariam a Live
+    /// Activity sem saber qual mostrar.
+    case alreadyHasActiveWorkout
+    case workoutNotFound
 }
