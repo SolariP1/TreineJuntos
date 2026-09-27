@@ -118,6 +118,21 @@ integrar por PR (mesmo sendo projeto solo — o PR é o registro da decisão).
 - Sem rodapé de ferramenta de IA.
 - Merge por **squash**, mantendo a mensagem no formato da seção 1.2.
 
+### 4.1 PRs empilhados
+
+Quando um PR tem outro PR como base (fases seguidas de um refactor, por
+exemplo), **o merge do PR de baixo fecha o de cima**: apagar a branch base
+fecha o PR que apontava para ela, e ele não pode ser reaberto. O caminho é
+rebasear a branch de cima na `main` e abrir um PR novo:
+
+```
+git rebase --onto origin/main <último-commit-da-base> <minha-branch>
+git push --force-with-lease
+```
+
+Para evitar o retrabalho, prefira terminar e integrar uma fase antes de
+começar a próxima.
+
 ---
 
 ## 5. O que nunca entra no repositório
