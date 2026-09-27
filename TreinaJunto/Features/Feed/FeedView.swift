@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct FeedView: View {
-    @State private var people = WorkoutPartner.sample
-    @State private var invites = IncomingInvite.sample
+    @State private var people = SampleData.partners
+    @State private var invites = SampleData.invites
     @State private var invited: Set<UUID> = []
     @State private var toastMessage: String?
     @State private var showAvailabilitySheet = false
@@ -40,7 +40,7 @@ struct FeedView: View {
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(item: $selectedPartner) { partner in
                 PartnerPortfolioView(
-                    portfolio: .sample(for: partner),
+                    portfolio: SampleData.portfolio(for: partner),
                     onInvite: {
                         invite(partner)
                         selectedPartner = nil
@@ -370,7 +370,7 @@ private struct PersonCardView: View {
                             .padding(.horizontal, 9).padding(.vertical, 5)
                             .background(.white.opacity(0.8), in: Capsule())
 
-                            Text(person.distance)
+                            Text(person.distanceLabel)
                                 .font(.mono(10.5, weight: .medium))
                                 .foregroundStyle(Playful.inkMuted)
                         }

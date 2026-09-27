@@ -8,19 +8,19 @@ enum Fixtures {
         name: String = "Marina",
         age: Int = 27,
         sport: Sport = .corrida,
-        distance: String = "450m",
+        distanceInMeters: Int = 450,
         gradientIndex: Int = 0
     ) -> WorkoutPartner {
         WorkoutPartner(
             name: name,
             age: age,
             sport: sport,
-            distance: distance,
+            distanceInMeters: distanceInMeters,
             gradientIndex: gradientIndex
         )
     }
 
     static func profile() -> UserProfile {
-        UserProfile()
+        SampleData.profile
     }
 }

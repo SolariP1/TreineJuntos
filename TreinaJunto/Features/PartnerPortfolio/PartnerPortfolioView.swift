@@ -99,7 +99,7 @@ struct PartnerPortfolioView: View {
 
                     HStack(spacing: 6) {
                         badge(symbol: style.symbol, text: portfolio.partner.sport.label)
-                        badge(symbol: "location.fill", text: portfolio.partner.distance)
+                        badge(symbol: "location.fill", text: portfolio.partner.distanceLabel)
                     }
 
                     Text(portfolio.bio)
@@ -579,7 +579,7 @@ struct PartnerPortfolioView: View {
 #Preview {
     NavigationStack {
         PartnerPortfolioView(
-            portfolio: .sample(for: WorkoutPartner.sample[0]),
+            portfolio: SampleData.portfolio(for: SampleData.partners[0]),
             onInvite: {}
         )
     }

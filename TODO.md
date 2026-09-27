@@ -23,9 +23,13 @@ Sem isso, nenhuma feature de produto se sustenta.
 - [ ] **Uma fonte de verdade para o perfil.** `FeedView` cumprimenta "Lucas"
       num literal enquanto `ProfileView` tem outra instância de `UserProfile`.
       Editar o perfil precisa mudar as duas.
-- [ ] **Localização real.** Distância hoje é a string `"450m"`. Sem número não
-      dá para ordenar por proximidade nem filtrar por raio — que é a promessa
-      central do app.
+- [x] ~~Distância como número em vez de texto~~ — feito na v0.4.0
+      (`distanceInMeters`), o que destravou ordenar e filtrar por raio.
+- [ ] **Localização real.** O número existe, mas é fixo no código. Falta
+      CoreLocation e consulta por proximidade de verdade.
+- [ ] **Distância no formato brasileiro.** `DistanceFormatter` escreve
+      `1.2km` com ponto, porque a fase 3 preservou o visual existente.
+      Em pt-BR o certo é `1,2 km` — usar `MeasurementFormatter` com o locale.
 - [ ] **Push notification.** Convite para treinar *agora* que chega depois não
       serve para nada. Sem push, o produto não funciona.
 

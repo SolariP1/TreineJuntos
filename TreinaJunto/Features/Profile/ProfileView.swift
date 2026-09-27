@@ -3,7 +3,7 @@ import SwiftUI
 struct ProfileView: View {
     var onLogout: () -> Void
 
-    @State private var profile = UserProfile()
+    @State private var profile = SampleData.profile
     @State private var showEditSheet = false
     @State private var showPhotoMenu = false
     @State private var showPhotoViewer = false
