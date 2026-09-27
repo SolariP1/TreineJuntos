@@ -25,7 +25,7 @@ fi
 
 if command -v swiftlint >/dev/null 2>&1; then
     echo "  › swiftlint"
-    if ! echo "$ARQUIVOS" | xargs swiftlint lint --quiet --strict --; then
+    if ! echo "$ARQUIVOS" | xargs swiftlint lint --baseline .swiftlint-baseline.json --quiet --strict --; then
         FALHOU=1
     fi
 else

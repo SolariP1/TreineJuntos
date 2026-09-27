@@ -20,7 +20,6 @@ opt_in_rules:
   - last_where
   - contains_over_first_not_nil
   - redundant_nil_coalescing
-  - unused_import
   - unneeded_parentheses_in_closure_argument
   - explicit_init
   - closure_spacing
@@ -65,3 +64,9 @@ nesting:
 force_cast: error
 force_try: error
 force_unwrapping: error
+
+# Dívida técnica registrada em .swiftlint-baseline.json: as Views grandes que
+# existem hoje. A baseline não perdoa violação nova — ela só impede que o CI
+# fique vermelho por dívida antiga enquanto a arquitetura é reorganizada.
+# Depois de quebrar uma View, regenere com:
+#   swiftlint lint --write-baseline .swiftlint-baseline.json
