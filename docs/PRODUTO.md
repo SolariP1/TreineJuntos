@@ -52,8 +52,34 @@ Um treino não é mais um par. É uma **sessão com participantes**.
 Modelar assim desde o começo evita a reescrita que aconteceria se
 começássemos com `partnerA` e `partnerB` no banco.
 
-**A decidir:** qual o limite de uma party? Sugiro começar em 6 — cabe um
-grupo de corrida ou um treino de funcional sem virar evento.
+### 2.1 Quantas pessoas — decidido em 27/09
+
+O anfitrião escolhe, entre **2 e 6, com padrão 2**.
+
+**Padrão 2** porque a promessa do app é parceiro, não turma. Abrir já
+sugerindo grupo muda o que a pessoa espera do produto na primeira tela.
+
+**Teto 6** não é número mágico: é onde a coisa muda de natureza.
+
+| Até 6 | Acima de 6 |
+|---|---|
+| Todo mundo se conhece no treino | Vira evento |
+| Cabe na Live Activity | Precisa de lista, não de avatares |
+| Quem faltou é óbvio | Precisa de chamada e lista de espera |
+| Um combina com o outro | Precisa de ferramenta de organizador |
+
+Evento é outro produto. Se um dia fizer sentido, que seja de propósito — e
+não por acidente, porque alguém abriu uma party de trinta.
+
+### 2.2 A party esbarra no saldo de convites
+
+Quem abre uma party de 4 **na própria academia** precisa de **3 convites**,
+um por visitante. Então o limite real quase nunca é o número escolhido — é o
+saldo do mês.
+
+O app precisa dizer isso **na hora de abrir a party**, não no portão da
+academia. Quando o treino é na academia do anfitrião e ele tem convites, a
+tela de abrir mostra quantos restam e trava o tamanho no que couber.
 
 ---
 
@@ -110,7 +136,41 @@ a uma pessoa.
 
 Dá um identificador estável por pessoa e por app, sem servidor. É a base.
 
-### 4.2 Sobre pedir CPF — ler antes de implementar
+### 4.2 Decidido em 27/09: CPF e telefone, com o CPF guardado como hash
+
+O Lucas quer os dois, e a decisão é dele. A implementação abaixo entrega o
+objetivo — uma conta por pessoa — **sem o banco guardar o número**.
+
+```
+CPF digitado → valida dígito verificador no aparelho
+             → hash com pepper que só o servidor conhece
+             → grava o hash, com índice único
+```
+
+O que isso entrega, igual ao pedido:
+
+- uma conta por CPF, garantido pelo índice único
+- segunda tentativa com o mesmo CPF é recusada
+- número inventado é barrado na validação do dígito
+
+E o que deixa de ser risco:
+
+- **não existe CPF no banco para vazar** — hash com pepper não volta
+- um dump do banco não expõe ninguém
+- na revisão da App Store dá para afirmar que o documento não é armazenado
+
+**Quando isso não serve:** se um dia for preciso o número de verdade — nota
+fiscal, pagamento, consulta em órgão. Aí é outro requisito, e a decisão muda.
+
+**Telefone** entra junto, com verificação por SMS. Os dois somados são mais
+fortes que qualquer um sozinho: o CPF garante unicidade, o telefone prova
+posse no momento do cadastro.
+
+O pepper **nunca** vai no app. Fica no servidor, e o hash é calculado lá —
+senão qualquer um que abrir o binário consegue testar CPFs até achar o de
+alguém.
+
+### 4.3 O que pesou contra o CPF, registrado
 
 A intenção é legítima: evitar conta falsa e duplicada num app onde duas
 pessoas vão se encontrar pessoalmente. Mas CPF tem três problemas concretos:
@@ -127,7 +187,7 @@ pessoas vão se encontrar pessoalmente. Mas CPF tem três problemas concretos:
    para o usuário. Você passa a ter obrigação de proteger, de informar em
    caso de incidente e de apagar quando pedirem.
 
-### 4.3 O que resolve melhor o mesmo problema
+### 4.4 O que mais protege, além do cadastro
 
 - **Verificação por telefone (SMS).** É o padrão do mercado para "uma conta,
   uma pessoa". Número é mais difícil de reaproveitar que CPF, e o usuário já
@@ -137,10 +197,12 @@ pessoas vão se encontrar pessoalmente. Mas CPF tem três problemas concretos:
 - **Denúncia e bloqueio.** Na prática é o que mais protege, e já está no
   backlog.
 
-**Recomendação:** telefone agora, documento depois e só como selo opcional.
-Se mesmo assim o CPF for requisito, ele precisa ser guardado cifrado, nunca
-exibido a outro usuário, e com política de privacidade explícita — e vale
-contar com uma rodada extra de revisão na App Store.
+Nada disso some por causa do cadastro. **Denúncia e bloqueio** continuam
+sendo o que mais protege na prática, e seguem no backlog.
+
+E valem as regras de sempre: o CPF nunca é exibido a outro usuário, a
+política de privacidade diz o que é feito com ele, e vale contar com uma
+rodada extra de revisão na App Store.
 
 ---
 
@@ -158,10 +220,14 @@ create table profiles (
   city               text,
   bio                text,
   gym                text,
+  -- Identidade. O CPF nunca é guardado: só o hash, calculado no servidor
+  -- com um pepper que não sai de lá. Serve para garantir uma conta por
+  -- pessoa sem existir número nenhum para vazar.
+  cpf_hash           bytea unique,
+  phone              text,
   phone_verified_at  timestamptz,
   location           geography(point, 4326),
   invites_per_month  int not null default 0,
-  plan_cycle_day     int not null default 1,   -- dia do mês em que o plano vira
   created_at         timestamptz default now()
 );
 create index on profiles using gist (location);
@@ -176,7 +242,10 @@ create table workouts (
   gym              text,
   location         geography(point, 4326),
   status           workout_status not null default 'open',
-  max_participants int not null default 2,      -- > 2 é party
+  -- 2 é dupla, até 6 é party. O teto é regra de produto, não de banco —
+  -- ver §2.1 para o porquê de 6.
+  max_participants int not null default 2
+                   check (max_participants between 2 and 6),
   scheduled_for    timestamptz,
   started_at       timestamptz,
   finished_at      timestamptz,

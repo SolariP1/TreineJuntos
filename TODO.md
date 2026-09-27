@@ -19,9 +19,11 @@ Sem isso, nenhuma feature de produto se sustenta.
       (`AppSession`).
 - [ ] **Sign in with Apple de verdade.** Decidido em 27/09. Google e e-mail
       ficam desabilitados até haver servidor.
-- [ ] **Verificação de telefone por SMS** — a forma de amarrar uma conta a uma
-      pessoa. Ver [PRODUTO.md §4](docs/PRODUTO.md), que explica por que CPF
-      não resolve o que promete e o que traz junto.
+- [ ] **CPF no cadastro, guardado como hash.** Decidido em 27/09: garante uma
+      conta por pessoa sem o banco ter o número. O hash é calculado no
+      servidor, com pepper que não sai de lá. Ver [PRODUTO.md §4.2](docs/PRODUTO.md).
+- [ ] **Verificação de telefone por SMS**, junto do CPF. O CPF garante
+      unicidade; o telefone prova posse no momento do cadastro.
 - [ ] **Onboarding que coleta.** Os botões entram, mas não perguntam nome,
       cidade, academia nem esportes — o perfil ainda nasce do exemplo.
 - [x] ~~Persistir perfil e sessão~~ — feito na v0.8.0 (SwiftData + UserDefaults).
@@ -58,7 +60,12 @@ Sem isso, nenhuma feature de produto se sustenta.
 - [ ] **Encerrar treino** — o gancho que falta para confirmar presença e
       avaliar.
 - [ ] **Party**: treino com mais de duas pessoas, modelado como sessão com
-      participantes desde o começo. *A decidir: qual o limite? Sugiro 6.*
+      participantes desde o começo. Tamanho escolhido pelo anfitrião,
+      **de 2 a 6, padrão 2** (decidido em 27/09).
+- [ ] **Avisar que a party gasta convites.** Party de 4 na própria academia
+      consome 3 convites, um por visitante — então o limite real costuma ser
+      o saldo do mês. A tela de abrir precisa dizer isso ali, não deixar a
+      pessoa descobrir no portão.
 
 ### Academia e convites (sua ideia de 23/09)
 
