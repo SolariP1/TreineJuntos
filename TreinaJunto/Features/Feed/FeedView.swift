@@ -5,6 +5,9 @@ struct FeedView: View {
 
     @State private var model: FeedViewModel?
     @State private var showAvailabilitySheet = false
+    /// A academia da pessoa. Vem do perfil assim que o onboarding coletar —
+    /// por enquanto o treino não é em academia nenhuma.
+    private let gym: String? = nil
     @State private var selectedPartner: WorkoutPartner?
     @State private var appeared = false
 
@@ -34,8 +37,12 @@ struct FeedView: View {
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: model?.toastMessage)
         .animation(.spring(response: 0.45, dampingFraction: 0.8), value: model?.invites.count)
         .sheet(isPresented: $showAvailabilitySheet) {
-            MarkAvailabilitySheet { sport, time in
-                Task { await model?.publishAvailability(sport: sport, when: time) }
+            if let model {
+                OpenWorkoutSheet(gym: gym, inviteBalance: model.inviteBalance) { sport, size, time in
+                    Task {
+                        await model.openWorkout(sport: sport, size: size, when: time, gym: gym)
+                    }
+                }
             }
         }
         .task {
@@ -44,7 +51,8 @@ struct FeedView: View {
             if model == nil {
                 model = FeedViewModel(
                     partnerRepository: dependencies.partners,
-                    inviteRepository: dependencies.invites
+                    inviteRepository: dependencies.invites,
+                    workoutRepository: dependencies.workouts
                 )
             }
             await model?.load()
@@ -69,7 +77,15 @@ struct FeedView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     greeting(model).sectionEntrance(appeared, index: 0)
-                    openWorkoutCard.sectionEntrance(appeared, index: 1)
+
+                    if let workout = model.activeWorkout {
+                        ActiveWorkoutCard(workout: workout) {
+                            Task { await model.cancelActiveWorkout() }
+                        }
+                        .sectionEntrance(appeared, index: 1)
+                    } else {
+                        openWorkoutCard.sectionEntrance(appeared, index: 1)
+                    }
 
                     if !model.invites.isEmpty {
                         inviteSection(model).sectionEntrance(appeared, index: 2)
@@ -153,7 +169,7 @@ struct FeedView: View {
 
                         HStack(spacing: 6) {
                             Image(systemName: "bolt.fill").font(.system(size: 11, weight: .bold))
-                            Text("Marcar treino agora").font(.brand(12.5, weight: .bold))
+                            Text("Abrir treino").font(.brand(12.5, weight: .bold))
                         }
                         .foregroundStyle(style.deep)
                         .padding(.horizontal, 13).padding(.vertical, 9)

@@ -13,12 +13,21 @@ final class FeedViewModel {
 
     var toastMessage: String?
 
+    private(set) var activeWorkout: Workout?
+    private(set) var inviteBalance = GymInviteBalance(perMonth: 0)
+
     private let partnerRepository: PartnerRepository
     private let inviteRepository: InviteRepository
+    private let workoutRepository: WorkoutRepository
 
-    init(partnerRepository: PartnerRepository, inviteRepository: InviteRepository) {
+    init(
+        partnerRepository: PartnerRepository,
+        inviteRepository: InviteRepository,
+        workoutRepository: WorkoutRepository
+    ) {
         self.partnerRepository = partnerRepository
         self.inviteRepository = inviteRepository
+        self.workoutRepository = workoutRepository
     }
 
     func load() async {
@@ -28,6 +37,8 @@ final class FeedViewModel {
             async let pending = inviteRepository.pendingInvites()
             partners = try await .loaded(nearby)
             invites = try await pending
+            activeWorkout = try await workoutRepository.activeWorkout()
+            inviteBalance = try await workoutRepository.inviteBalance()
         } catch {
             partners = .failed("Não deu pra carregar quem está perto. Tente de novo.")
         }
@@ -57,12 +68,34 @@ final class FeedViewModel {
         }
     }
 
-    func publishAvailability(sport: Sport, when: String) async {
+    func openWorkout(sport: Sport, size: Int, when: String, gym: String?) async {
         do {
-            try await inviteRepository.publishAvailability(sport: sport, when: when)
-            toast("Disponibilidade publicada: \(sport.label) — \(when.lowercased())")
+            activeWorkout = try await workoutRepository.open(
+                sport: sport,
+                gym: gym,
+                maxParticipants: size,
+                scheduledFor: nil
+            )
+            toast(
+                size == 2
+                    ? "Treino aberto: \(sport.label) — \(when.lowercased())"
+                    : "Party de \(size) aberta: \(sport.label) — \(when.lowercased())"
+            )
+        } catch WorkoutError.alreadyHasActiveWorkout {
+            toast("Você já tem um treino aberto.")
         } catch {
-            toast("Não deu pra publicar sua disponibilidade.")
+            toast("Não deu pra abrir o treino.")
+        }
+    }
+
+    func cancelActiveWorkout() async {
+        guard let workout = activeWorkout else { return }
+        do {
+            try await workoutRepository.cancel(workoutID: workout.id)
+            activeWorkout = nil
+            toast("Treino cancelado.")
+        } catch {
+            toast("Não deu pra cancelar o treino.")
         }
     }
 
