@@ -19,15 +19,18 @@ struct AppDependencies: Sendable {
 
     init(
         partners: PartnerRepository = InMemoryPartnerRepository(),
-        invites: InviteRepository = InMemoryInviteRepository(),
+        invites: InviteRepository? = nil,
         profiles: ProfileRepository = InMemoryProfileRepository(),
-        workouts: WorkoutRepository = InMemoryWorkoutRepository(),
+        workouts: WorkoutRepository? = nil,
         session: SessionStore = UserDefaultsSessionStore()
     ) {
+        // Treinos e convites são o mesmo ator: aceitar um convite entra no
+        // treino, e separar abriria a porta para um sem o outro.
+        let treinos = SampleData.seededWorkoutRepository()
         self.partners = partners
-        self.invites = invites
+        self.invites = invites ?? treinos
         self.profiles = profiles
-        self.workouts = workouts
+        self.workouts = workouts ?? treinos
         self.session = session
     }
 

@@ -8,7 +8,7 @@ import Foundation
 @MainActor
 final class FeedViewModel {
     private(set) var partners: LoadState<[WorkoutPartner]> = .idle
-    private(set) var invites: [IncomingInvite] = []
+    private(set) var invites: [ReceivedInvite] = []
     private(set) var invitedIDs: Set<UUID> = []
 
     var toastMessage: String?
@@ -34,7 +34,7 @@ final class FeedViewModel {
         partners = .loading
         do {
             async let nearby = partnerRepository.nearbyPartners()
-            async let pending = inviteRepository.pendingInvites()
+            async let pending = inviteRepository.receivedInvites()
             partners = try await .loaded(nearby)
             invites = try await pending
             activeWorkout = try await workoutRepository.activeWorkout()
@@ -44,25 +44,43 @@ final class FeedViewModel {
         }
     }
 
+    /// Convida alguém para o meu treino aberto.
+    ///
+    /// Sem treino aberto não há para onde convidar — é o que separa "mandar
+    /// um oi" de "vem treinar comigo às 7h".
     func invite(_ partner: WorkoutPartner) async {
+        guard let workout = activeWorkout, workout.status == .open else {
+            toast("Abra um treino antes de convidar alguém.")
+            return
+        }
         do {
-            try await inviteRepository.invite(partnerID: partner.id)
+            try await inviteRepository.invite(partnerID: partner.id, toWorkout: workout.id)
             invitedIDs.insert(partner.id)
             toast("Convite enviado para \(partner.name)!")
         } catch InviteError.alreadyInvited {
             // Já convidou: o botão devia estar desabilitado, então isto é
             // corrida de toque duplo. Só realinha a tela com a verdade.
             invitedIDs.insert(partner.id)
+        } catch WorkoutError.full {
+            toast("Seu treino já está cheio.")
         } catch {
             toast("Não deu pra enviar o convite. Tente de novo.")
         }
     }
 
-    func respond(to invite: IncomingInvite, accepted: Bool) async {
+    /// Aceitar entra no treino de quem convidou.
+    func respond(to received: ReceivedInvite, accepted: Bool) async {
+        let nome = received.from.name
         do {
-            try await inviteRepository.respond(to: invite.id, accepted: accepted)
-            invites.removeAll { $0.id == invite.id }
-            toast(accepted ? "Combinado com \(invite.name)!" : "Convite de \(invite.name) recusado.")
+            try await inviteRepository.respond(to: received.id, accepted: accepted)
+            invites.removeAll { $0.id == received.id }
+            if accepted {
+                activeWorkout = try await workoutRepository.activeWorkout()
+            }
+            toast(accepted ? "Combinado com \(nome)!" : "Convite de \(nome) recusado.")
+        } catch WorkoutError.full {
+            invites.removeAll { $0.id == received.id }
+            toast("O treino de \(nome) encheu.")
         } catch {
             toast("Não deu pra responder agora. Tente de novo.")
         }

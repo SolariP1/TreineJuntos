@@ -1,26 +1,24 @@
 import Foundation
 
-/// Convites para treinar junto, nos dois sentidos.
+/// Convites para treinar junto.
+///
+/// Vive ao lado do `WorkoutRepository` porque convite e treino são o mesmo
+/// assunto: aceitar um convite **põe a pessoa dentro do treino**, e as duas
+/// coisas precisam acontecer juntas ou nenhuma.
 protocol InviteRepository: Sendable {
     /// Convites que chegaram para mim e ainda não respondi.
-    func pendingInvites() async throws -> [IncomingInvite]
+    func receivedInvites() async throws -> [ReceivedInvite]
 
-    /// Convido alguém para treinar.
-    ///
-    /// Lança `InviteError.alreadyInvited` se já existe convite meu em aberto
-    /// para essa pessoa.
-    func invite(partnerID: UUID) async throws
+    /// Convido alguém para um treino meu.
+    func invite(partnerID: UUID, toWorkout workoutID: UUID) async throws
 
-    /// Aceito ou recuso um convite que recebi.
+    /// Aceito ou recuso. Aceitar entra no treino.
     func respond(to inviteID: UUID, accepted: Bool) async throws
 
-    /// Anuncia que estou livre para treinar, para quem estiver perto.
-    func publishAvailability(sport: Sport, when: String) async throws
-}
+    /// Aceites que eu ainda não vi — o que o card de novidade mostra ao
+    /// abrir o app.
+    func unseenAcceptances() async throws -> [ReceivedInvite]
 
-enum InviteError: Error, Equatable {
-    /// Já convidei essa pessoa e o convite segue em aberto.
-    case alreadyInvited
-    /// O convite não existe mais — a pessoa cancelou, ou já respondi.
-    case inviteNotFound
+    /// Marca como vistos, para não aparecerem de novo.
+    func markAcceptancesSeen(_ inviteIDs: [UUID]) async throws
 }

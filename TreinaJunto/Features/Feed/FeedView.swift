@@ -190,11 +190,11 @@ struct FeedView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
-                    ForEach(model.invites) { invite in
+                    ForEach(model.invites) { received in
                         InviteCardView(
-                            invite: invite,
-                            onAccept: { Task { await model.respond(to: invite, accepted: true) } },
-                            onDecline: { Task { await model.respond(to: invite, accepted: false) } }
+                            received: received,
+                            onAccept: { Task { await model.respond(to: received, accepted: true) } },
+                            onDecline: { Task { await model.respond(to: received, accepted: false) } }
                         )
                     }
                 }

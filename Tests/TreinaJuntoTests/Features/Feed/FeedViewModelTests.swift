@@ -17,14 +17,14 @@ private struct FailingPartnerRepository: PartnerRepository {
 @MainActor
 @Suite("Feed · ViewModel")
 struct FeedViewModelTests {
+    /// Treinos e convites vêm do mesmo ator, como no app.
     private func makeModel(
         partners: PartnerRepository = InMemoryPartnerRepository(),
-        invites: InviteRepository = InMemoryInviteRepository(),
-        workouts: WorkoutRepository = InMemoryWorkoutRepository()
+        workouts: InMemoryWorkoutRepository = SampleData.seededWorkoutRepository()
     ) -> FeedViewModel {
         FeedViewModel(
             partnerRepository: partners,
-            inviteRepository: invites,
+            inviteRepository: workouts,
             workoutRepository: workouts
         )
     }
@@ -60,6 +60,7 @@ struct FeedViewModelTests {
     func invitingMarksAndToasts() async throws {
         let model = makeModel()
         await model.load()
+        await model.openWorkout(sport: .corrida, size: 3, when: "Agora", gym: nil)
         let marina = try #require(model.partners.value?.first)
 
         await model.invite(marina)
@@ -74,6 +75,7 @@ struct FeedViewModelTests {
         // mostrando a pessoa como convidada, não voltar atrás.
         let model = makeModel()
         await model.load()
+        await model.openWorkout(sport: .corrida, size: 3, when: "Agora", gym: nil)
         let marina = try #require(model.partners.value?.first)
 
         await model.invite(marina)
@@ -93,6 +95,43 @@ struct FeedViewModelTests {
 
         #expect(model.invites.count == antes - 1)
         #expect(!model.invites.contains { $0.id == primeiro.id })
+    }
+
+    @Test("Sem treino aberto, convidar avisa em vez de falhar calado")
+    func invitingWithoutAWorkoutExplainsWhy() async throws {
+        // Convite sem treino não existe mais: é o que separa "manda um oi"
+        // de "vem treinar comigo às 7h".
+        let model = makeModel()
+        await model.load()
+        let marina = try #require(model.partners.value?.first)
+
+        await model.invite(marina)
+
+        #expect(model.hasInvited(marina) == false)
+        #expect(model.toastMessage?.contains("Abra um treino") == true)
+    }
+
+    @Test("Aceitar um convite põe você no treino de quem chamou")
+    func acceptingPutsYouInTheirWorkout() async throws {
+        let model = makeModel()
+        await model.load()
+        let recebido = try #require(model.invites.first)
+
+        await model.respond(to: recebido, accepted: true)
+
+        #expect(model.activeWorkout?.id == recebido.workout.id)
+        #expect(model.activeWorkout?.contains(SampleData.meID) == true)
+    }
+
+    @Test("Recusar não põe você em treino nenhum")
+    func decliningPutsYouNowhere() async throws {
+        let model = makeModel()
+        await model.load()
+        let recebido = try #require(model.invites.first)
+
+        await model.respond(to: recebido, accepted: false)
+
+        #expect(model.activeWorkout == nil)
     }
 
     @Test("Abrir treino usa o nome do esporte, não o do case")

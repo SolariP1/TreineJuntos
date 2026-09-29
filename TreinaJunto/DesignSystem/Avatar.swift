@@ -17,12 +17,6 @@ extension WorkoutPartner {
     }
 }
 
-extension IncomingInvite {
-    var gradient: LinearGradient {
-        Avatar.gradient(at: gradientIndex)
-    }
-}
-
 extension Review {
     var gradient: LinearGradient {
         Avatar.gradient(at: gradientIndex)
