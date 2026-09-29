@@ -336,3 +336,77 @@ os números atuais, eles mudam**:
 duas defesas desde o primeiro dia — **comprimir a foto no aparelho** antes de
 subir, e **limitar quantas fotos por treino**. Sem isso o limite chega em
 semanas.
+
+---
+
+## 8. Quando alguém aceita
+
+Decidido em 28/09. O momento em que dois desconhecidos viram parceiros de
+treino é o momento mais importante do app — é quando a promessa se cumpre.
+Ele não pode passar despercebido numa lista.
+
+### 8.1 O que acontece
+
+Convidei alguém, ou alguém me convidou, e a resposta foi sim. Na próxima vez
+que eu abro o app:
+
+```
+┌─────────────────────────┐
+│      Marina aceitou!    │   ← um card por pessoa
+│   [foto]  Corrida       │
+│   hoje às 7h            │
+│                         │
+│  [ Conversar ]  [ Depois ]
+│        ● ○ ○            │   ← passa pra frente se houver mais
+└─────────────────────────┘
+```
+
+- **Um card por pessoa** que aceitou desde a última vez que eu vi
+- Dá para **passar pra frente** quando há mais de uma
+- **Conversar** leva direto à conversa daquele treino
+- **Depois** fecha sem perder nada — a conversa continua no Chat
+
+### 8.2 As regras que evitam que isso vire incômodo
+
+Um aviso comemorativo que aparece na hora errada deixa de ser presente e vira
+obstáculo. Então:
+
+- **Só aparece o que eu ainda não vi.** Cada aceite é marcado como visto ao
+  ser exibido; ninguém vê a mesma novidade duas vezes.
+- **Nunca no meio de uma ação.** Se alguém aceitar enquanto eu estou usando o
+  app, é uma faixa discreta no topo, não um modal por cima do que eu estava
+  fazendo. O modal é só ao abrir o app.
+- **Sem nada para mostrar, não aparece nada.** Sem card vazio, sem "nenhuma
+  novidade".
+- **Recusa não vira modal.** Ninguém merece uma tela comemorativa para dizer
+  que foi recusado. Some da lista de convites e pronto.
+- **Fecha fácil.** Tocar fora fecha, e fechar não perde nada.
+
+### 8.3 Onde a conversa vive — decisão pendente
+
+"Todos que eu aceito ou que me aceitam aparecem no Chat." Falta decidir **o
+que é uma conversa**, e a escolha muda o banco.
+
+**A — Conversa por pessoa.** Tenho uma conversa com a Marina para sempre,
+como no WhatsApp. Familiar e simples. Mas numa party de quatro, combinar
+horário vira três conversas separadas, e ninguém sabe o que o outro
+combinou.
+
+**B — Conversa por treino.** O treino tem uma conversa, com todo mundo que
+está nele. Dupla é a conversa de duas pessoas; party é a de quatro. Combinar
+"vou atrasar dez minutos" chega para todos. Mas treinar de novo com a mesma
+pessoa na semana seguinte abre outra conversa, e o histórico se espalha.
+
+**C — As duas.** Conversa do treino enquanto ele dura, conversa com a pessoa
+para sempre. É o que apps de carona fazem. Também é o dobro de trabalho e de
+tela.
+
+**Recomendação: B**, por dois motivos. Party sem conversa em grupo não
+funciona — e party foi decisão sua. E o que as pessoas precisam dizer é quase
+sempre sobre *aquele treino*: onde encontrar, que horas, vou atrasar. O
+histórico espalhado é um problema menor do que quatro conversas paralelas
+para marcar um treino só.
+
+Na lista do Chat, uma conversa de dupla mostra a foto e o nome da pessoa —
+então na prática ela **parece** uma conversa por pessoa, que é o que a
+maioria espera ver.

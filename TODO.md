@@ -43,7 +43,20 @@ Hoje o 👋 no card manda um convite que não leva a lugar nenhum: ele guarda um
 **Por que primeiro:** sem isso, party, presença, avaliação e confiabilidade
 não têm como existir. É a peça que falta para o app fazer o que promete.
 
-### 2. Confirmar presença
+### 2. O aceite e o chat
+
+- [ ] **Card de quem aceitou** ao abrir o app, com "Conversar" e "Depois",
+      passando pra frente quando houver mais de um
+- [ ] Marcar cada aceite como visto — ninguém vê a mesma novidade duas vezes
+- [ ] Faixa discreta, e não modal, quando o aceite chega com o app aberto
+- [ ] **Chat**: a aba deixa de ser placeholder e lista as conversas
+- [ ] "Conversar" leva direto à conversa certa
+
+> **Decisão pendente:** conversa por pessoa ou por treino?
+> Ver [PRODUTO.md §8.3](docs/PRODUTO.md) — recomendo **por treino**, porque
+> party sem conversa em grupo não funciona.
+
+### 3. Confirmar presença
 
 - [ ] Tela ao encerrar: quem apareceu de fato
 - [ ] Hoje o encerrar marca só o anfitrião, porque ninguém consegue entrar
@@ -51,7 +64,7 @@ não têm como existir. É a peça que falta para o app fazer o que promete.
 **Por que:** é o que resolve o maior medo do usuário — marcar e levar bolo.
 E é de onde a confiabilidade sai.
 
-### 3. Dar lastro ao que hoje é fachada
+### 4. Dar lastro ao que hoje é fachada
 
 O `PartnerPortfolio` modela confiabilidade, sequência, avaliações e medalhas,
 mas tudo vem de `seed % 4`. A estrutura mais valiosa do app está pronta e
@@ -62,13 +75,13 @@ vazia.
 - [ ] Sequência contada de treinos reais
 - [ ] Medalhas a partir de fatos
 
-### 4. Live Activity
+### 5. Live Activity
 
 - [ ] Target de **Widget Extension** (não roda no target principal)
 - [ ] Treino iniciado aparece no topo da tela e na Dynamic Island
 - [ ] Atualização por **APNs** quando o app está fechado
 
-### 5. Fotos e comentários no treino
+### 6. Fotos e comentários no treino
 
 - [ ] Mural dentro do treino iniciado, entre participantes
 - [ ] **Comprimir a foto no aparelho** antes de subir
@@ -152,8 +165,6 @@ Depois disso eu faço:
 
 - [ ] **Push notification.** Convite para treinar *agora* que chega depois
       não serve. Sem push, o produto não funciona.
-- [ ] **Chat.** A aba é placeholder. Convite aceito sem lugar para combinar
-      horário morre ali.
 - [ ] **Busca.** A aba é placeholder. Filtro por modalidade, horário e
       distância.
 
