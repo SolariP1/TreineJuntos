@@ -5,6 +5,7 @@ struct FeedView: View {
 
     @State private var model: FeedViewModel?
     @State private var showAvailabilitySheet = false
+    @State private var askAboutInvites = false
     /// A academia da pessoa. Vem do perfil assim que o onboarding coletar —
     /// por enquanto o treino não é em academia nenhuma.
     private let gym: String? = nil
@@ -36,6 +37,23 @@ struct FeedView: View {
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: model?.toastMessage)
         .animation(.spring(response: 0.45, dampingFraction: 0.8), value: model?.invites.count)
+        .confirmationDialog(
+            "Vai usar convite da academia?",
+            isPresented: $askAboutInvites,
+            titleVisibility: .visible
+        ) {
+            Button("Sim, vou levar quem está comigo") {
+                Task { await model?.startActiveWorkout(usingGymInvites: true) }
+            }
+            Button("Não, cada um entra por conta") {
+                Task { await model?.startActiveWorkout(usingGymInvites: false) }
+            }
+            Button("Cancelar", role: .cancel) {}
+        } message: {
+            if let workout = model?.activeWorkout, let gym {
+                Text("Levar \(workout.guestCount) na \(gym) gasta \(workout.guestCount) convites.")
+            }
+        }
         .sheet(isPresented: $showAvailabilitySheet) {
             if let model {
                 OpenWorkoutSheet(gym: gym, inviteBalance: model.inviteBalance) { sport, size, time in
@@ -76,12 +94,15 @@ struct FeedView: View {
         case let .loaded(people):
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    greeting(model).sectionEntrance(appeared, index: 0)
+                    FeedGreeting(inviteCount: model.invites.count).sectionEntrance(appeared, index: 0)
 
                     if let workout = model.activeWorkout {
-                        ActiveWorkoutCard(workout: workout) {
-                            Task { await model.cancelActiveWorkout() }
-                        }
+                        ActiveWorkoutCard(
+                            workout: workout,
+                            onStart: { startWorkout(workout, model: model) },
+                            onFinish: { finishWorkout(workout, model: model) },
+                            onCancel: { Task { await model.cancelActiveWorkout() } }
+                        )
                         .sectionEntrance(appeared, index: 1)
                     } else {
                         openWorkoutCard.sectionEntrance(appeared, index: 1)
@@ -98,50 +119,6 @@ struct FeedView: View {
                 // Libera a tab bar flutuante para o último card ser alcançável.
                 .padding(.bottom, 90)
             }
-        }
-    }
-
-    // MARK: - Greeting
-
-    private func greeting(_ model: FeedViewModel) -> some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle().fill(Theme.avatarGradients[1])
-                Text("L").font(.display(15)).foregroundStyle(.white)
-            }
-            .frame(width: 42, height: 42)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Olá, Lucas 👋")
-                    .font(.display(17, weight: .semibold))
-                    .foregroundStyle(Playful.ink)
-                Text(todayLabel)
-                    .font(.brand(11.5, weight: .medium))
-                    .foregroundStyle(Playful.inkMuted)
-            }
-
-            Spacer()
-
-            Button {} label: {
-                Image(systemName: "bell.fill")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Playful.ink)
-                    .frame(width: 42, height: 42)
-                    .background(Playful.surface, in: Circle())
-                    .overlay(alignment: .topTrailing) {
-                        if !model.invites.isEmpty {
-                            Text("\(model.invites.count)")
-                                .font(.brand(9, weight: .bold))
-                                .foregroundStyle(.white)
-                                .frame(width: 17, height: 17)
-                                .background(Palette.accent.base, in: Circle())
-                                .overlay(Circle().stroke(Playful.canvas, lineWidth: 2))
-                                .offset(x: 3, y: -3)
-                        }
-                    }
-                    .shadow(color: .black.opacity(0.05), radius: 8, y: 4)
-            }
-            .buttonStyle(.pressable)
         }
     }
 
@@ -262,13 +239,21 @@ struct FeedView: View {
         }
     }
 
-    private var todayLabel: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "pt_BR")
-        formatter.dateFormat = "EEEE, d 'de' MMMM"
-        // Só a primeira letra — `.capitalized` daria "Terça-Feira, 22 De Setembro".
-        let raw = formatter.string(from: Date())
-        return raw.prefix(1).uppercased() + raw.dropFirst()
+    /// Começar o treino. Só pergunta sobre convite quando faz sentido: numa
+    /// academia, com gente para levar, e com convite no plano.
+    private func startWorkout(_ workout: Workout, model: FeedViewModel) {
+        let vaiLevarAlguem = workout.guestCount > 0
+        if gym != nil, vaiLevarAlguem, model.inviteBalance.hasInvites {
+            askAboutInvites = true
+        } else {
+            Task { await model.startActiveWorkout(usingGymInvites: false) }
+        }
+    }
+
+    private func finishWorkout(_ workout: Workout, model: FeedViewModel) {
+        // Enquanto ninguém consegue entrar num treino, quem está lá é só o
+        // anfitrião. A tela de confirmar presença chega junto com o entrar.
+        Task { await model.finishActiveWorkout(present: [workout.hostID]) }
     }
 }
 

@@ -132,6 +132,72 @@ struct FeedViewModelTests {
         #expect(model.toastMessage?.contains("já tem um treino aberto") == true)
     }
 
+    @Test("Começar move o treino para iniciado, com hora marcada")
+    func startingMovesToStarted() async {
+        let model = makeModel()
+        await model.load()
+        await model.openWorkout(sport: .corrida, size: 2, when: "Agora", gym: nil)
+
+        await model.startActiveWorkout(usingGymInvites: false)
+
+        #expect(model.activeWorkout?.status == .started)
+        #expect(model.activeWorkout?.startedAt != nil)
+    }
+
+    @Test("Começar sem convite não mexe no saldo")
+    func startingWithoutInvitesKeepsBalance() async {
+        let model = makeModel(workouts: InMemoryWorkoutRepository(invitesPerMonth: 4))
+        await model.load()
+        await model.openWorkout(sport: .corrida, size: 3, when: "Agora", gym: "Smart Fit")
+
+        await model.startActiveWorkout(usingGymInvites: false)
+
+        #expect(model.inviteBalance.available() == 4)
+    }
+
+    @Test("Saldo insuficiente avisa quanto falta, em vez de falhar calado")
+    func insufficientBalanceSaysHowManyAreMissing() async throws {
+        var treino = try Workout(
+            hostID: SampleData.meID, sport: .corrida, gym: "Smart Fit", maxParticipants: 3
+        )
+        try treino.join(UUID())
+        try treino.join(UUID())
+        let model = makeModel(
+            workouts: InMemoryWorkoutRepository(invitesPerMonth: 1, workouts: [treino])
+        )
+        await model.load()
+
+        await model.startActiveWorkout(usingGymInvites: true)
+
+        #expect(model.toastMessage?.contains("2 convites") == true)
+        #expect(model.activeWorkout?.status == .open, "tem que continuar aberto para ajustar")
+    }
+
+    @Test("Encerrar tira o treino do Feed")
+    func finishingClearsTheWorkout() async {
+        let model = makeModel()
+        await model.load()
+        await model.openWorkout(sport: .corrida, size: 2, when: "Agora", gym: nil)
+        await model.startActiveWorkout(usingGymInvites: false)
+
+        await model.finishActiveWorkout(present: [SampleData.meID])
+
+        #expect(model.activeWorkout == nil)
+    }
+
+    @Test("Encerrar libera para abrir outro treino")
+    func finishingFreesTheSlot() async {
+        let model = makeModel()
+        await model.load()
+        await model.openWorkout(sport: .corrida, size: 2, when: "Agora", gym: nil)
+        await model.startActiveWorkout(usingGymInvites: false)
+        await model.finishActiveWorkout(present: [SampleData.meID])
+
+        await model.openWorkout(sport: .yoga, size: 2, when: "Agora", gym: nil)
+
+        #expect(model.activeWorkout?.sport == .yoga)
+    }
+
     @Test("Cancelar tira o treino do Feed")
     func cancellingClearsTheWorkout() async {
         let model = makeModel()

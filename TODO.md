@@ -1,137 +1,207 @@
 # Backlog — TreinaJunto
 
-Atualizado em 27/09/2026 (v0.1.1).
+Atualizado em 28/09/2026, sobre a v0.10.0 mais o PR #13.
 
-Como ler: **Fundação** é o que precisa existir para o app ser um produto e não
-um protótipo. **Produto** é o que o usuário percebe. **Depois** são apostas que
-ainda precisam de decisão.
+**Como ler.** O que está em *Agora* é o caminho crítico: cada item destrava o
+seguinte. *Depende de você* são coisas que eu não consigo fazer sozinho.
+*Depois* são apostas que não devem começar antes da fundação.
 
-O refactor de arquitetura que sustenta tudo isso está em
-[docs/ARQUITETURA.md](docs/ARQUITETURA.md), com as fases de `v0.2.0` a `v0.8.0`.
+Decisões de produto: [docs/PRODUTO.md](docs/PRODUTO.md).
+Arquitetura e plano de migração: [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
 
 ---
 
-## Fundação
+## Já está pronto
 
-Sem isso, nenhuma feature de produto se sustenta.
+Para não perder de vista o que existe.
 
-- [x] ~~Sessão e "quem sou eu" acessível de qualquer tela~~ — feito na v0.8.0
-      (`AppSession`).
-- [ ] **Sign in with Apple de verdade.** Decidido em 27/09. Google e e-mail
-      ficam desabilitados até haver servidor.
-- [ ] **CPF no cadastro, guardado como hash.** Decidido em 27/09: garante uma
-      conta por pessoa sem o banco ter o número. O hash é calculado no
-      servidor, com pepper que não sai de lá. Ver [PRODUTO.md §4.2](docs/PRODUTO.md).
-- [ ] **Verificação de telefone por SMS**, junto do CPF. O CPF garante
-      unicidade; o telefone prova posse no momento do cadastro.
-- [ ] **Onboarding que coleta.** Os botões entram, mas não perguntam nome,
-      cidade, academia nem esportes — o perfil ainda nasce do exemplo.
-- [x] ~~Persistir perfil e sessão~~ — feito na v0.8.0 (SwiftData + UserDefaults).
-- [ ] **Keychain para o token**, quando houver autenticação. `UserDefaults`
-      guarda só o marcador de sessão, nunca credencial.
-- [ ] **Uma fonte de verdade para o perfil.** `FeedView` cumprimenta "Lucas"
-      num literal enquanto `ProfileView` tem outra instância de `UserProfile`.
-      Editar o perfil precisa mudar as duas.
-- [x] ~~Distância como número em vez de texto~~ — feito na v0.4.0
-      (`distanceInMeters`), o que destravou ordenar e filtrar por raio.
-- [ ] **Localização real.** O número existe, mas é fixo no código. Falta
-      CoreLocation e consulta por proximidade de verdade.
-- [ ] **Distância no formato brasileiro.** `DistanceFormatter` escreve
-      `1.2km` com ponto, porque a fase 3 preservou o visual existente.
-      Em pt-BR o certo é `1,2 km` — usar `MeasurementFormatter` com o locale.
-- [ ] **Push notification.** Convite para treinar *agora* que chega depois não
-      serve para nada. Sem push, o produto não funciona.
+- [x] Arquitetura em camadas, 7 fases, `v0.2.0` a `v0.8.0`
+- [x] 97 testes, CI com 3 checks, dívida de lint zerada
+- [x] Sessão que sobrevive a fechar o app (`AppSession`)
+- [x] Perfil gravado em disco (SwiftData)
+- [x] Treino modelado: três estados, party de 2 a 6, presença
+- [x] Saldo de convites que zera sozinho na virada do mês
+- [x] Abrir, iniciar e encerrar treino pela interface
+- [x] Aviso de quantos convites a party vai gastar, na hora de abrir
 
-## Produto
+---
 
-> **Decisões de 27/09** em [docs/PRODUTO.md](docs/PRODUTO.md): ciclo do
-> treino em três estados, party, os dois tipos de convite e o esboço do banco.
+## Agora — o caminho crítico
 
-### Ciclo do treino
+Em ordem. Cada um destrava o próximo.
 
-- [ ] **Abrir treino** — o que hoje é "marcar disponibilidade" vira registro
-      de verdade, que aparece para quem está perto e recebe convites.
-- [ ] **Iniciar treino** — momento separado, depois de aberto. É aqui que o
-      convite de academia é descontado.
-- [ ] **Live Activity** no topo da tela e na Dynamic Island, como o iFood: a
-      pessoa sai do app e o treino continua visível. Exige um target de
-      Widget Extension e push pelo APNs.
-- [ ] **Fotos e comentários** dentro do treino iniciado, entre participantes.
-- [ ] **Encerrar treino** — o gancho que falta para confirmar presença e
-      avaliar.
-- [ ] **Party**: treino com mais de duas pessoas, modelado como sessão com
-      participantes desde o começo. Tamanho escolhido pelo anfitrião,
-      **de 2 a 6, padrão 2** (decidido em 27/09).
-- [ ] **Avisar que a party gasta convites.** Party de 4 na própria academia
-      consome 3 convites, um por visitante — então o limite real costuma ser
-      o saldo do mês. A tela de abrir precisa dizer isso ali, não deixar a
-      pessoa descobrir no portão.
+### 1. Ligar convite a treino
 
-### Academia e convites (sua ideia de 23/09)
+Hoje o 👋 no card manda um convite que não leva a lugar nenhum: ele guarda um
+`Set<UUID>` e mostra um toast. **Nada conecta duas pessoas.**
 
-- [ ] Campo `gym` no perfil, ao lado da cidade.
-- [ ] Coletar no onboarding e permitir editar no perfil.
-- [ ] Mostrar a academia no card do Feed, junto de cidade e distância.
-- [ ] Flag `hasInvites` — "seu plano dá convites?".
-- [ ] Se sim: quantos o plano dá e quantos ainda restam.
-- [ ] Ao iniciar um treino, perguntar "vai usar um convite?" — e descontar 1 se
-      a resposta for sim. Quem não tem convite não vê pergunta nenhuma.
-- [ ] Exibir no card do Feed **os convites da outra pessoa** e a academia dela.
+- [ ] O 👋 passa a convidar a pessoa para o **meu treino aberto**
+- [ ] Aceitar um convite **põe a pessoa dentro do treino**
+- [ ] O Feed mostra treinos abertos de quem está perto, não só pessoas
+- [ ] Sair de um treino antes de começar
 
-> **Respondidas em 27/09:** o saldo **zera todo mês**, calculado a partir do
-> registro de uso em vez de zerado por tarefa agendada (PRODUTO.md §3.2);
-> "iniciar treino" é **momento separado**, depois de abrir; e o Feed mostra
-> os convites **das outras pessoas** — *quem pode me levar na academia dele*.
-> O meu saldo fica no meu perfil, junto do cadastro do plano.
+**Por que primeiro:** sem isso, party, presença, avaliação e confiabilidade
+não têm como existir. É a peça que falta para o app fazer o que promete.
 
-### Defeitos encontrados
+### 2. O aceite e o chat
 
-- [ ] **O toast nunca aparece.** Ele é desenhado com `padding(.bottom, 12)`,
-      mas a tab bar flutuante ocupa ~90pt — então todo aviso de "Convite
-      enviado" fica escondido atrás dela. É anterior ao refactor: nenhuma
-      confirmação de ação chega ao usuário hoje.
+- [ ] **Card de quem aceitou** ao abrir o app, com "Conversar" e "Depois",
+      passando pra frente quando houver mais de um
+- [ ] Marcar cada aceite como visto — ninguém vê a mesma novidade duas vezes
+- [ ] Faixa discreta, e não modal, quando o aceite chega com o app aberto
+- [ ] **Chat**: a aba deixa de ser placeholder e lista as conversas
+- [ ] "Conversar" leva direto à conversa certa
 
-### Fechar o que já está desenhado
+> **Decidido em 28/09:** a conversa vive **no treino**
+> ([PRODUTO.md §8.3](docs/PRODUTO.md)). Com isso, o chat e o mural de fotos
+> viram a mesma feature — ver §8.4.
 
-- [ ] **Chat.** A aba existe como placeholder. Convite aceito sem lugar para
-      combinar horário morre ali.
-- [ ] **Busca.** A aba existe como placeholder. Filtro por modalidade, horário
-      e distância.
-- [ ] **Convidar de verdade.** Hoje `invite()` só mostra um toast e guarda um
-      `Set<UUID>` local. Nada sai do aparelho.
+### 3. Confirmar presença
 
-### Dar lastro ao que hoje é fachada
+- [ ] Tela ao encerrar: quem apareceu de fato
+- [ ] Hoje o encerrar marca só o anfitrião, porque ninguém consegue entrar
 
-O `PartnerPortfolio` já modela **confiabilidade**, **sequência**, **avaliações**
-e **medalhas** — mas tudo é gerado por `sample(for:)` a partir do nome da
-pessoa. A estrutura de dados mais valiosa do app está pronta e vazia.
+**Por que:** é o que resolve o maior medo do usuário — marcar e levar bolo.
+E é de onde a confiabilidade sai.
 
-- [ ] **Confirmar presença.** Sem isso, confiabilidade é número inventado.
-      É a métrica que resolve o maior medo do usuário: marcar e levar bolo.
-- [ ] **Avaliar depois do treino.** Só quem treinou junto avalia.
-- [ ] **Sequência real**, contada a partir de treinos confirmados.
-- [ ] **Medalhas** a partir de fatos, não de `seed % 4`.
+### 4. Dar lastro ao que hoje é fachada
+
+O `PartnerPortfolio` modela confiabilidade, sequência, avaliações e medalhas,
+mas tudo vem de `seed % 4`. A estrutura mais valiosa do app está pronta e
+vazia.
+
+- [ ] Confiabilidade calculada de presenças confirmadas
+- [ ] Avaliar depois do treino — só quem treinou junto avalia
+- [ ] Sequência contada de treinos reais
+- [ ] Medalhas a partir de fatos
+
+### 5. Live Activity
+
+- [ ] Target de **Widget Extension** (não roda no target principal)
+- [ ] Treino iniciado aparece no topo da tela e na Dynamic Island
+- [ ] Atualização por **APNs** quando o app está fechado
+
+### 6. Fotos no treino
+
+A conversa já existe desde o item 2. Aqui ela ganha foto.
+
+- [ ] Mandar foto dentro do treino iniciado
+- [ ] **Comprimir a foto no aparelho** antes de subir
+- [ ] **Limitar fotos por treino**
+
+> As duas últimas não são detalhe: Storage é o primeiro limite do plano
+> gratuito do Supabase que você vai bater. Sem elas, semanas.
+
+---
+
+## Depende de você
+
+Coisas que eu não consigo fazer sozinho.
+
+### Supabase
+
+- [ ] **Criar o projeto** em supabase.com, região **São Paulo (sa-east-1)**
+- [ ] Rodar o schema de [PRODUTO.md §5](docs/PRODUTO.md) no SQL Editor
+- [ ] Me passar a **URL** e a **chave anon** (a anon é pública por design)
+- [ ] **Nunca** me passar a `service_role` nem pô-la no app — ela ignora
+      todas as políticas de segurança
+
+Depois disso eu faço:
+
+- [ ] Políticas de RLS (só quem treinou junto avalia, etc.)
+- [ ] Função `invites_left` no banco
+- [ ] `RemoteWorkoutRepository`, `RemotePartnerRepository`, etc.
+- [ ] Edge Function para o **hash do CPF** — o pepper não pode ir no binário
+
+### Conta de desenvolvedor Apple
+
+- [ ] Necessária para Sign in with Apple, APNs e publicar
+- [ ] Chave do APNs (`.p8`) — vai para o servidor, **nunca** para o repo
+
+### Decisões que ainda não precisam ser tomadas, mas vão precisar
+
+- [ ] Limite de fotos por treino
+- [ ] O que acontece com um treino aberto que ninguém entrou — expira quando?
+- [ ] Party pode ser aberta a quem não foi convidado, ou é só por convite?
+
+---
+
+## Cadastro e identidade
+
+- [ ] **Sign in with Apple** de verdade (decidido em 27/09)
+- [ ] **CPF como hash**, calculado no servidor com pepper
+- [ ] **Verificação de telefone por SMS**
+- [ ] **Onboarding que coleta**: nome, cidade, academia, esportes
+- [ ] **Keychain** para o token — `UserDefaults` guarda só o marcador de
+      sessão, nunca credencial
+- [ ] Google e e-mail ficam desabilitados até haver servidor
+
+---
+
+## Academia e convites
+
+- [ ] Campo `gym` no perfil, ao lado da cidade
+- [ ] Coletar no onboarding e permitir editar no perfil
+- [ ] Cadastro do plano: tem convites? quantos por mês?
+- [ ] Mostrar a academia e **os convites da outra pessoa** no card do Feed —
+      *quem pode me levar na academia dele*
+- [ ] Meu saldo no meu perfil, junto do cadastro do plano
+
+---
+
+## Defeitos conhecidos
+
+- [ ] **O toast nunca aparece.** `padding(.bottom, 12)` contra uma tab bar
+      flutuante de ~90pt. Nenhuma confirmação de ação chega ao usuário hoje.
+- [ ] **Duas fontes de verdade para o perfil.** `FeedGreeting` cumprimenta
+      "Lucas" e mostra "L" em literais, enquanto o Perfil lê do repositório.
+      Editar o nome não muda a saudação.
+- [ ] **Distância no formato errado.** `DistanceFormatter` escreve `1.2km`
+      com ponto; em pt-BR é `1,2 km`. Usar `MeasurementFormatter` com locale.
+- [ ] **Localização é fixa no código.** `distanceInMeters` existe, mas os
+      valores são constantes. Falta CoreLocation de verdade.
+
+---
+
+## Fundação que ainda falta
+
+- [ ] **Push notification.** Convite para treinar *agora* que chega depois
+      não serve. Sem push, o produto não funciona.
+- [ ] **Busca.** A aba é placeholder. Filtro por modalidade, horário e
+      distância.
+
+---
+
+## Antes de publicar
+
+- [ ] **Política de privacidade** — obrigatória, e mais ainda com CPF e
+      localização
+- [ ] **Apagar conta e dados** dentro do app — exigência da Apple e da LGPD
+- [ ] **Sign in with Apple** presente, já que há login do Google na tela
+      (diretriz 4.8)
+- [ ] Ícone, capturas de tela, texto da App Store
+- [ ] Revisar o que o app pede de permissão e por quê
+
+---
 
 ## Depois
 
-Apostas — nenhuma deve começar antes da Fundação.
+Apostas. Nenhuma deve começar antes do caminho crítico.
 
-- [ ] **Parceiro fixo.** O interesse "Parceiro fixo" já existe no catálogo, mas
-      não faz nada. Treino recorrente com a mesma pessoa é retenção, e é o que
-      transforma o app de busca em rotina.
-- [ ] **Compatibilidade de verdade.** Hoje é `70 + (seed % 28)`. Cruzar esporte,
-      horário, nível e academia é o diferencial defensável do produto.
-- [ ] **Grupos.** "Grupo/comunidade" também já está no catálogo sem função.
-- [ ] **Segurança.** Treinar com desconhecido é o risco real do app: denúncia,
-      bloqueio, primeiro encontro em local público.
-- [ ] **Parceria com academias.** A feature de convites já aponta para cá — a
-      academia tem interesse em levar visitante.
+- [ ] **Parceiro fixo.** O interesse já existe no catálogo sem função. Treino
+      recorrente é o que transforma busca em rotina.
+- [ ] **Compatibilidade de verdade.** Hoje é `70 + (seed % 28)`. Cruzar
+      esporte, horário, nível e academia é o diferencial defensável.
+- [ ] **Grupos.** "Grupo/comunidade" também está no catálogo sem função.
+- [ ] **Segurança.** Denúncia, bloqueio, primeiro encontro em local público.
+      É o risco real de um app onde desconhecidos se encontram.
+- [ ] **Parceria com academias.** A feature de convites já aponta para cá.
+
+---
 
 ## Dívida técnica
 
-- [ ] Zerar `.swiftlint-baseline.json`: 9 violações, todas em Views grandes.
-      Cada fase do refactor encolhe a lista; quando chegar a zero, o arquivo
-      é apagado.
-- [ ] Teste para cada ViewModel criado, na pasta da feature em
-      `Tests/TreinaJuntoTests/Features/`.
-- [ ] Testes de snapshot dos componentes do DesignSystem, depois da fase 2.
+- [ ] Testes de snapshot dos componentes do DesignSystem
+- [ ] Testes de interface do fluxo principal (abrir → começar → encerrar)
+- [ ] `SampleData` vai ter que sair quando a API chegar — hoje ele é o
+      dublê e a semente do primeiro perfil ao mesmo tempo

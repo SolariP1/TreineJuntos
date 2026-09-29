@@ -88,6 +88,39 @@ final class FeedViewModel {
         }
     }
 
+    /// Começa o treino que está aberto.
+    ///
+    /// `usingGymInvites` só chega verdadeiro quando o treino é numa academia
+    /// e a pessoa confirmou que vai levar gente com convite dela.
+    func startActiveWorkout(usingGymInvites: Bool) async {
+        guard let workout = activeWorkout else { return }
+        do {
+            try await workoutRepository.start(
+                workoutID: workout.id,
+                usingGymInvites: usingGymInvites
+            )
+            activeWorkout = try await workoutRepository.activeWorkout()
+            inviteBalance = try await workoutRepository.inviteBalance()
+            toast("Treino começou. Bom treino!")
+        } catch let WorkoutError.notEnoughInvites(needed, available) {
+            toast("Você precisa de \(needed) convites e tem \(available).")
+        } catch {
+            toast("Não deu pra começar o treino.")
+        }
+    }
+
+    /// Encerra o treino, dizendo quem apareceu.
+    func finishActiveWorkout(present: Set<UUID>) async {
+        guard let workout = activeWorkout else { return }
+        do {
+            try await workoutRepository.finish(workoutID: workout.id, present: present)
+            activeWorkout = nil
+            toast("Treino encerrado.")
+        } catch {
+            toast("Não deu pra encerrar o treino.")
+        }
+    }
+
     func cancelActiveWorkout() async {
         guard let workout = activeWorkout else { return }
         do {
