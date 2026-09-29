@@ -52,9 +52,9 @@ não têm como existir. É a peça que falta para o app fazer o que promete.
 - [ ] **Chat**: a aba deixa de ser placeholder e lista as conversas
 - [ ] "Conversar" leva direto à conversa certa
 
-> **Decisão pendente:** conversa por pessoa ou por treino?
-> Ver [PRODUTO.md §8.3](docs/PRODUTO.md) — recomendo **por treino**, porque
-> party sem conversa em grupo não funciona.
+> **Decidido em 28/09:** a conversa vive **no treino**
+> ([PRODUTO.md §8.3](docs/PRODUTO.md)). Com isso, o chat e o mural de fotos
+> viram a mesma feature — ver §8.4.
 
 ### 3. Confirmar presença
 
@@ -81,9 +81,11 @@ vazia.
 - [ ] Treino iniciado aparece no topo da tela e na Dynamic Island
 - [ ] Atualização por **APNs** quando o app está fechado
 
-### 6. Fotos e comentários no treino
+### 6. Fotos no treino
 
-- [ ] Mural dentro do treino iniciado, entre participantes
+A conversa já existe desde o item 2. Aqui ela ganha foto.
+
+- [ ] Mandar foto dentro do treino iniciado
 - [ ] **Comprimir a foto no aparelho** antes de subir
 - [ ] **Limitar fotos por treino**
 
