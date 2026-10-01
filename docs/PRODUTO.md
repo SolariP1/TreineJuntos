@@ -384,6 +384,10 @@ obstáculo. Então:
 
 ### 8.3 Onde a conversa vive — decidido em 28/09: por treino
 
+> **Revisto em 01/10.** A conversa passou a ser **por pessoa e por grupo**,
+> e o treino virou algo que se convida *a partir* da conversa. Ver §9. O
+> texto abaixo fica como registro do que foi pensado antes.
+
 "Todos que eu aceito ou que me aceitam aparecem no Chat." Falta decidir **o
 que é uma conversa**, e a escolha muda o banco.
 
@@ -428,3 +432,216 @@ duas — mensagem de texto e foto são o mesmo registro com `kind` diferente.
 A conversa **nasce quando o treino é criado** e pertence a quem está dentro.
 Quem sai do treino antes de começar perde o acesso: a conversa é do treino,
 não um canal permanente entre duas pessoas.
+
+---
+
+## 9. Chat, grupos e o convite que sai da conversa
+
+Decidido em 01/10. Substitui o §8.3: a conversa deixa de ser do treino e
+passa a ser **entre pessoas**. O treino é o que se combina *dentro* dela.
+
+```
+  curtida mútua ──▶ conversa privada ──▶ grupo (opcional)
+                           │                  │
+                           └──── convite ─────┘
+                                    │
+                                    ▼
+                    treino ABERTO ──▶ INICIADO ──▶ ENCERRADO
+                    "falta 1 pessoa"   Live Activity
+```
+
+### 9.1 A conversa privada nasce de uma curtida mútua
+
+- Eu curto alguém, e essa pessoa me curte de volta: abre uma **conversa
+  privada** entre nós dois, na aba **Chat**.
+- Curtida de um lado só não abre nada e não avisa o outro lado. Quem curtiu
+  não fica sabendo que não foi correspondido.
+- A conversa é **permanente**, como no WhatsApp. Treinar de novo com a mesma
+  pessoa na semana seguinte acontece na mesma conversa, com o histórico junto.
+
+### 9.2 Grupos
+
+Na aba Chat há um botão **Criar grupo**. Quem cria pode chamar gente de
+dois jeitos:
+
+| Jeito | Quem pode entrar |
+|---|---|
+| **Escolher das minhas conversas** | Só quem já tem conversa privada comigo, ou seja, só curtida mútua |
+| **Link de convite** | Qualquer pessoa com conta que receber o link |
+
+O link é o único caminho em que alguém entra numa conversa **sem curtida
+mútua**. Por isso:
+
+- o link **expira** e o criador do grupo pode **revogá-lo** a qualquer hora;
+- quem abre o link vê nome, foto e membros do grupo **antes** de entrar, e
+  entra só se tocar em **Entrar**;
+- abrir o link sem conta leva ao cadastro e, depois dele, volta ao grupo.
+
+### 9.3 O convite para treino sai da conversa
+
+O 👋 deixa de ser a forma de convidar. Convidar para treinar passa a
+acontecer **no card do meu treino aberto**:
+
+```
+┌───────────────────────────────┐
+│  Corrida · hoje 7h            │
+│                               │
+│  (eu)  (Ana)  ( + )  ( + )    │   ← um círculo por vaga
+│         Falta 2 pessoas       │
+│                               │
+│        [ Começar ]            │
+└───────────────────────────────┘
+```
+
+1. Abro um treino com o tamanho que escolhi (2 a 6, §2.1). Cada vaga livre
+   aparece como um círculo **+**, e a legenda diz **"Falta X pessoa(s)"**.
+2. Tocar numa vaga abre a lista das **minhas conversas**, privadas e grupos.
+3. Escolhida a conversa, o convite é **enviado como mensagem nela**: um card
+   com o treino e os botões **Aceitar** e **Recusar**. Num grupo, qualquer
+   membro pode aceitar.
+4. Quem aceita **entra no treino**. A foto dela ocupa a vaga e a legenda
+   recalcula: "Falta 1 pessoa", e some quando o treino lota.
+5. O card da mensagem muda para todos na conversa: "Ana entrou", ou
+   "Treino cheio" quando não há mais vaga.
+
+Regras:
+
+- **Posso mandar mais convites do que tenho vagas.** Quem aceitar primeiro
+  entra; quem chegar depois do treino lotar vê "Treino cheio" e o botão
+  Aceitar desaparece. Exigir uma vaga por convite deixaria o anfitrião
+  esperando resposta de quem não vai responder.
+- **Convite pendente morre quando o treino começa** ou é cancelado. O card
+  passa a dizer "Treino já começou" (é o `InviteError.workoutNotOpen` de hoje).
+- **Recusar não avisa o anfitrião com destaque** (§8.2 continua valendo). O
+  card só mostra que foi recusado.
+- Quem entrou pode **sair antes de começar**. A vaga volta a ser **+**.
+
+### 9.4 Começar e a Live Activity
+
+O anfitrião toca em **Começar**. A partir daí:
+
+- O treino passa a **iniciado** e grava `started_at`. **Essa é a única fonte
+  da contagem.** O tempo na tela é sempre calculado de `started_at`, nunca
+  um cronômetro guardado: fechar o app, reiniciar o celular ou abrir em
+  outro aparelho mostra o mesmo tempo.
+- Vagas que sobraram **fecham**. Convites pendentes morrem.
+- Sobe a **Live Activity**, para **todos os participantes**, cada um no seu
+  celular, no topo da tela e na Dynamic Island, como o iFood mostra o pedido:
+
+| Lugar | O que mostra |
+|---|---|
+| Dynamic Island compacta | ícone do esporte · tempo correndo |
+| Dynamic Island expandida | esporte, local, fotos de quem está junto, tempo, **Encerrar** |
+| Tela bloqueada | o mesmo que a expandida |
+
+- Ao **encerrar**, grava `finished_at`. A duração fica salva como
+  `finished_at − started_at`, a Live Activity mostra o tempo final por
+  alguns minutos e some. Daí vem a confirmação de presença (§1.3).
+
+Detalhes técnicos que decidem como isso é feito:
+
+- **O tempo corre sem push.** A Live Activity usa
+  `Text(timerInterval:)` a partir de `started_at`, e o próprio sistema
+  atualiza o relógio. Push só é necessário quando algo **muda**: alguém
+  saiu, o treino foi encerrado por outro aparelho.
+- **Nos celulares dos convidados a Live Activity precisa começar por push**,
+  porque o app deles pode estar fechado quando o anfitrião toca em Começar.
+  Isso é o *push-to-start* do ActivityKit, que existe **a partir do iOS
+  17.2**. O alvo hoje é 17.0. **Subir para 17.2** é o caminho simples;
+  manter 17.0 significa que, abaixo de 17.2, a atividade só aparece quando
+  o convidado abrir o app.
+- **Um treino ativo por vez** continua valendo
+  (`WorkoutError.alreadyHasActiveWorkout`). É o que garante que a Live
+  Activity sabe qual treino mostrar.
+
+### 9.5 O que muda no banco
+
+Em relação ao §5:
+
+```sql
+-- Curtidas. A conversa privada nasce quando existe o par nos dois sentidos.
+create table likes (
+  from_id     uuid not null references profiles,
+  to_id       uuid not null references profiles,
+  created_at  timestamptz default now(),
+  primary key (from_id, to_id),
+  check (from_id <> to_id)
+);
+
+create type conversation_kind as enum ('direct', 'group');
+
+create table conversations (
+  id          uuid primary key default gen_random_uuid(),
+  kind        conversation_kind not null,
+  name        text,                             -- só grupo
+  created_by  uuid references profiles,
+  created_at  timestamptz default now()
+);
+
+create table conversation_members (
+  conversation_id  uuid not null references conversations on delete cascade,
+  profile_id       uuid not null references profiles,
+  joined_at        timestamptz default now(),
+  last_read_at     timestamptz,
+  primary key (conversation_id, profile_id)
+);
+
+-- Link de convite de grupo. Guardar o token como hash, pelo mesmo motivo
+-- do CPF: um vazamento do banco não pode virar link válido.
+create table group_invite_links (
+  id               uuid primary key default gen_random_uuid(),
+  conversation_id  uuid not null references conversations on delete cascade,
+  token_hash       bytea not null unique,
+  expires_at       timestamptz not null,
+  revoked_at       timestamptz
+);
+
+create type message_kind as enum ('text', 'photo', 'workout_invite');
+
+-- Substitui a workout_posts. Mensagem, foto e convite de treino são o
+-- mesmo registro com kind diferente.
+create table messages (
+  id               uuid primary key default gen_random_uuid(),
+  conversation_id  uuid not null references conversations on delete cascade,
+  author_id        uuid not null references profiles,
+  kind             message_kind not null,
+  body             text,
+  photo_path       text,
+  workout_id       uuid references workouts,    -- só workout_invite
+  created_at       timestamptz default now()
+);
+create index on messages (conversation_id, created_at desc);
+```
+
+E o convite de treino passa a saber de onde saiu, para o card na conversa
+poder mudar de estado:
+
+```sql
+alter table workout_participants add column invited_via uuid references messages;
+```
+
+### 9.6 O que muda no código de hoje
+
+| Hoje | Passa a ser |
+|---|---|
+| 👋 no card do Feed convida para o meu treino | 👋 vira **curtir**; convidar acontece na vaga do treino |
+| `WorkoutInvite` tem `toProfileID` | aponta para uma **conversa**; num grupo, quem aceitar primeiro entra |
+| Aba Chat é placeholder | lista de conversas privadas e grupos, com **Criar grupo** |
+| `ActiveWorkoutCard` mostra o treino | ganha os círculos de vaga e a legenda "Falta X pessoa(s)" |
+| `Workout.start` já grava `startedAt` | sem mudança: já é a fonte da contagem |
+| Live Activity no backlog | Widget Extension + push-to-start |
+
+O modelo do treino (`Workout`, `join`, `leave`, `start`, `finish`) **não
+precisa mudar**. O que muda é por onde o convite chega até ele.
+
+### 9.7 Ainda em aberto
+
+- **Começar com vaga sobrando.** A proposta acima deixa começar a qualquer
+  momento. A alternativa é exigir pelo menos um convidado dentro.
+- **Fotos durante o treino** (§8.4) vão para qual conversa? A que originou o
+  convite funciona na dupla, mas numa party com convidados vindos de
+  conversas diferentes não existe uma conversa com todo mundo. Opção: ao
+  começar, o app oferece criar um grupo com os participantes.
+- **Validade do link de grupo.** Sugestão: 7 dias.
+- **Tamanho máximo de grupo.** O teto de 6 é do treino, não da conversa.
+- **Desfazer curtida.** A conversa some para os dois, ou fica só arquivada?
