@@ -3,10 +3,19 @@ import SwiftUI
 struct MainTabView: View {
     var onLogout: () -> Void
 
+    private enum Tab: Hashable {
+        case feed, search, chat, profile
+    }
+
+    @State private var tab: Tab = .feed
+    /// Link de grupo aberto de fora do app, esperando a aba Chat consumir.
+    @State private var pendingGroupToken: String?
+
     var body: some View {
-        TabView {
+        TabView(selection: $tab) {
             FeedView()
                 .tabItem { Label("Feed", systemImage: "flame.fill") }
+                .tag(Tab.feed)
 
             PlaceholderView(
                 mood: .happy,
@@ -15,19 +24,25 @@ struct MainTabView: View {
                 message: "Filtre por modalidade, horário e distância. Chegando em breve."
             )
             .tabItem { Label("Buscar", systemImage: "magnifyingglass") }
+            .tag(Tab.search)
 
-            PlaceholderView(
-                mood: .sleepy,
-                sport: .natacao,
-                title: "Nenhuma conversa ainda",
-                message: "Convide alguém no Feed — quando aceitar, a conversa aparece aqui."
-            )
-            .tabItem { Label("Chat", systemImage: "bubble.left.fill") }
+            ChatListView(pendingGroupToken: $pendingGroupToken)
+                .tabItem { Label("Chat", systemImage: "bubble.left.fill") }
+                .tag(Tab.chat)
 
             ProfileView(onLogout: onLogout)
                 .tabItem { Label("Perfil", systemImage: "person.fill") }
+                .tag(Tab.profile)
         }
         .tint(Palette.accent.base)
+        .onOpenURL { url in
+            // treinajunto://grupo/<token>
+            guard url.scheme == "treinajunto", url.host() == "grupo", let token = url.pathComponents.last,
+                  token != "/"
+            else { return }
+            tab = .chat
+            pendingGroupToken = token
+        }
     }
 }
 

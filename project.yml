@@ -23,6 +23,11 @@ targets:
       path: TreinaJunto/Info.plist
       properties:
         UILaunchScreen: {}
+        # Link de convite de grupo: treinajunto://grupo/<token>
+        CFBundleURLTypes:
+          - CFBundleURLName: com.lucasalmeida.treinajunto
+            CFBundleURLSchemes:
+              - treinajunto
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         UIAppFonts:

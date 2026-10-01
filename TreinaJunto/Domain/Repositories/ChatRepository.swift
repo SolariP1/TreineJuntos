@@ -13,6 +13,10 @@ protocol ChatRepository: Sendable {
     /// Minhas conversas, da mais recente para a mais antiga.
     func conversations() async throws -> [Conversation]
 
+    /// As mesmas conversas, já com quem está do outro lado e a última
+    /// mensagem — o que a lista do Chat desenha.
+    func summaries() async throws -> [ConversationSummary]
+
     /// As mensagens de uma conversa, da mais antiga para a mais nova.
     func messages(in conversationID: UUID) async throws -> [ChatMessage]
 
@@ -25,7 +29,14 @@ protocol ChatRepository: Sendable {
     /// Gera um link novo para o grupo. O anterior deixa de valer.
     func createInviteLink(for conversationID: UUID) async throws -> GroupInviteLink
 
+    /// O link que vale agora, se houver.
+    func currentInviteLink(for conversationID: UUID) async throws -> GroupInviteLink?
+
     func revokeInviteLink(for conversationID: UUID) async throws
+
+    /// O grupo de um link, para a pessoa ver quem está lá **antes** de
+    /// decidir entrar.
+    func previewGroup(withToken token: String) async throws -> ConversationSummary
 
     /// Entro num grupo pelo link.
     @discardableResult
