@@ -52,9 +52,14 @@ não têm como existir. É a peça que falta para o app fazer o que promete.
 - [ ] **Chat**: a aba deixa de ser placeholder e lista as conversas
 - [ ] "Conversar" leva direto à conversa certa
 
-> **Decidido em 28/09:** a conversa vive **no treino**
-> ([PRODUTO.md §8.3](docs/PRODUTO.md)). Com isso, o chat e o mural de fotos
-> viram a mesma feature — ver §8.4.
+> **Revisto em 01/10:** a conversa é **por pessoa e por grupo**, e o convite
+> para treino sai dela ([PRODUTO.md §9](docs/PRODUTO.md)).
+
+- [ ] Curtida mútua abre conversa privada (o 👋 vira curtir)
+- [ ] **Criar grupo**: chamar das minhas conversas ou por link que expira
+- [ ] Vagas do treino como círculos **+**, com "Falta X pessoa(s)"
+- [ ] Tocar na vaga → escolher conversa → convite vira mensagem com Aceitar
+- [ ] Quem aceita ocupa a vaga com a foto; treino cheio fecha os convites
 
 ### 3. Confirmar presença
 
@@ -79,7 +84,10 @@ vazia.
 
 - [ ] Target de **Widget Extension** (não roda no target principal)
 - [ ] Treino iniciado aparece no topo da tela e na Dynamic Island
-- [ ] Atualização por **APNs** quando o app está fechado
+- [ ] Tempo com `Text(timerInterval:)` a partir de `startedAt`, sem push
+- [ ] **Push-to-start** para subir nos celulares dos convidados
+      (exige iOS 17.2, o alvo hoje é 17.0, ver [PRODUTO.md §9.4](docs/PRODUTO.md))
+- [ ] Atualização por **APNs** quando algo muda com o app fechado
 
 ### 6. Fotos no treino
 
