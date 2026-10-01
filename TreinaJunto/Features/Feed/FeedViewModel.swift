@@ -100,6 +100,10 @@ final class FeedViewModel {
                     : "Party de \(size) aberta: \(sport.label) — \(when.lowercased())"
             )
         } catch WorkoutError.alreadyHasActiveWorkout {
+            // A tela e o repositório discordavam: o repositório tem um treino
+            // que a tela não estava mostrando. Em vez de recusar e deixar a
+            // pessoa sem saída, mostra o treino que existe de verdade.
+            activeWorkout = try? await workoutRepository.activeWorkout()
             toast("Você já tem um treino aberto.")
         } catch {
             toast("Não deu pra abrir o treino.")
@@ -139,14 +143,28 @@ final class FeedViewModel {
         }
     }
 
-    func cancelActiveWorkout() async {
+    /// Fecha o treino do jeito certo para quem está pedindo: o anfitrião
+    /// cancela o treino inteiro; quem entrou por convite apenas sai.
+    ///
+    /// Antes, sair de um treino dos outros cancelava o treino **deles** — e
+    /// as outras pessoas ficavam sem treino sem entender por quê.
+    func leaveOrCancelActiveWorkout() async {
         guard let workout = activeWorkout else { return }
+        let souAnfitriao = workout.hostID == SampleData.meID
         do {
-            try await workoutRepository.cancel(workoutID: workout.id)
+            if souAnfitriao {
+                try await workoutRepository.cancel(workoutID: workout.id)
+                toast("Treino cancelado.")
+            } else {
+                try await workoutRepository.leave(workoutID: workout.id)
+                toast("Você saiu do treino.")
+            }
             activeWorkout = nil
-            toast("Treino cancelado.")
         } catch {
-            toast("Não deu pra cancelar o treino.")
+            // Se falhou, a tela precisa voltar a contar a verdade em vez de
+            // mostrar um treino que talvez não exista mais.
+            activeWorkout = try? await workoutRepository.activeWorkout()
+            toast(souAnfitriao ? "Não deu pra cancelar o treino." : "Não deu pra sair do treino.")
         }
     }
 

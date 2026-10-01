@@ -22,7 +22,10 @@ struct FeedView: View {
 
                     if let message = model.toastMessage {
                         ToastView(message: message)
-                            .padding(.bottom, 12)
+                            // Acima da tab bar flutuante. Com 12 o aviso
+                            // ficava atrás dela e nunca era visto — nenhum
+                            // erro chegava a quem estava usando o app.
+                            .padding(.bottom, 100)
                             .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
                 }
@@ -101,7 +104,7 @@ struct FeedView: View {
                             workout: workout,
                             onStart: { startWorkout(workout, model: model) },
                             onFinish: { finishWorkout(workout, model: model) },
-                            onCancel: { Task { await model.cancelActiveWorkout() } }
+                            onLeave: { Task { await model.leaveOrCancelActiveWorkout() } }
                         )
                         .sectionEntrance(appeared, index: 1)
                     } else {

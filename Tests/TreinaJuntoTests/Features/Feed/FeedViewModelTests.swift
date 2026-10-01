@@ -134,6 +134,38 @@ struct FeedViewModelTests {
         #expect(model.activeWorkout == nil)
     }
 
+    @Test("Sair de um treino dos outros não cancela o treino deles")
+    func leavingSomeoneElsesWorkoutDoesNotCancelIt() async throws {
+        // Antes isto cancelava o treino do anfitrião, e as outras pessoas
+        // ficavam sem treino sem entender por quê.
+        let repo = SampleData.seededWorkoutRepository()
+        let model = makeModel(workouts: repo)
+        await model.load()
+        let recebido = try #require(model.invites.first)
+        await model.respond(to: recebido, accepted: true)
+
+        await model.leaveOrCancelActiveWorkout()
+
+        #expect(model.activeWorkout == nil)
+        // O treino do anfitrião segue aberto para quem ficou.
+        let aindaAberto = try await repo.nearbyOpenWorkouts(withinMeters: 5000)
+        #expect(aindaAberto.contains { $0.id == recebido.workout.id })
+    }
+
+    @Test("Abrir com um treino já de pé mostra o treino em vez de deixar sem saída")
+    func openingWithAnActiveWorkoutShowsIt() async throws {
+        // Se a tela e o repositório discordarem, a pessoa não pode ficar
+        // presa: o app mostra o treino que existe de verdade.
+        let treino = try Workout(hostID: SampleData.meID, sport: .corrida)
+        let repo = InMemoryWorkoutRepository(workouts: [treino])
+        let model = makeModel(workouts: repo)
+
+        await model.openWorkout(sport: .yoga, size: 2, when: "Agora", gym: nil)
+
+        #expect(model.activeWorkout?.id == treino.id)
+        #expect(model.toastMessage?.contains("já tem um treino") == true)
+    }
+
     @Test("Abrir treino usa o nome do esporte, não o do case")
     func openWorkoutToastUsesTheLabel() async {
         // Regressão da fase 2: interpolar o enum direto imprimia "musculacao",
@@ -243,7 +275,7 @@ struct FeedViewModelTests {
         await model.load()
         await model.openWorkout(sport: .corrida, size: 2, when: "Agora", gym: nil)
 
-        await model.cancelActiveWorkout()
+        await model.leaveOrCancelActiveWorkout()
 
         #expect(model.activeWorkout == nil)
     }

@@ -9,10 +9,15 @@ struct ActiveWorkoutCard: View {
     let workout: Workout
     var onStart: () -> Void
     var onFinish: () -> Void
-    var onCancel: () -> Void
+    var onLeave: () -> Void
 
     private var style: SportStyle {
         workout.sport.style
+    }
+
+    /// O anfitrião cancela o treino; quem entrou por convite só sai dele.
+    private var isHost: Bool {
+        workout.hostID == SampleData.meID
     }
 
     var body: some View {
@@ -52,10 +57,10 @@ struct ActiveWorkoutCard: View {
 
             Spacer()
 
-            // Cancelar só existe antes de começar: depois de iniciado, o
+            // Sair só existe antes de começar: depois de iniciado, o
             // caminho é encerrar, que registra quem apareceu.
             if workout.status == .open {
-                Button(action: onCancel) {
+                Button(action: onLeave) {
                     Image(systemName: "xmark")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(.white)
@@ -63,7 +68,7 @@ struct ActiveWorkoutCard: View {
                         .background(.white.opacity(0.2), in: Circle())
                 }
                 .buttonStyle(.pressable)
-                .accessibilityLabel("Cancelar treino")
+                .accessibilityLabel(isHost ? "Cancelar treino" : "Sair do treino")
             }
         }
     }
@@ -132,14 +137,14 @@ private func startedSample() -> Workout? {
 
 #Preview("Aberto") {
     if let treino = try? Workout(hostID: SampleData.meID, sport: .corrida, maxParticipants: 4) {
-        ActiveWorkoutCard(workout: treino, onStart: {}, onFinish: {}, onCancel: {})
+        ActiveWorkoutCard(workout: treino, onStart: {}, onFinish: {}, onLeave: {})
             .padding()
     }
 }
 
 #Preview("Iniciado") {
     if let treino = startedSample() {
-        ActiveWorkoutCard(workout: treino, onStart: {}, onFinish: {}, onCancel: {})
+        ActiveWorkoutCard(workout: treino, onStart: {}, onFinish: {}, onLeave: {})
             .padding()
     }
 }
