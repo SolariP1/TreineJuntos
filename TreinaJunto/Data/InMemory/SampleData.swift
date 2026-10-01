@@ -13,12 +13,6 @@ enum SampleData {
         WorkoutPartner(name: "Rafael", age: 26, sport: .ciclismo, distanceInMeters: 1500, gradientIndex: 3)
     ]
 
-    static let invites: [IncomingInvite] = [
-        IncomingInvite(name: "Camila", sport: .corrida, when: "hoje às 7h", gradientIndex: 2),
-        IncomingInvite(name: "Thiago", sport: .funcional, when: "amanhã às 18h", gradientIndex: 3),
-        IncomingInvite(name: "Ana", sport: .ciclismo, when: "sábado de manhã", gradientIndex: 0)
-    ]
-
     static let weeklySplit: [WorkoutDay] = [
         WorkoutDay(
             day: "Segunda",
