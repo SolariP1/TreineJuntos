@@ -9,6 +9,10 @@ protocol WorkoutRepository: Sendable {
     /// iniciado agora. É o que alimenta a Live Activity.
     func activeWorkout() async throws -> Workout?
 
+    /// Um treino qualquer, pelo id. É o que o convite numa conversa usa para
+    /// mostrar o estado de agora: vagas, cheio, já começou.
+    func workout(withID id: UUID) async throws -> Workout?
+
     /// Treinos abertos perto de mim, dos quais eu ainda não faço parte.
     func nearbyOpenWorkouts(withinMeters radius: Int) async throws -> [Workout]
 

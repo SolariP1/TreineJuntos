@@ -133,7 +133,12 @@ struct ConversationViewModelTests {
         let repo = InMemoryChatRepository(likedMeBy: [marina.id])
         try await repo.like(marina.id)
         let resumo = try #require(try await repo.summaries().first)
-        return (ConversationViewModel(summary: resumo, repository: repo), repo)
+        return (ConversationViewModel(
+            summary: resumo,
+            repository: repo,
+            invites: InMemoryWorkoutRepository(),
+            workouts: InMemoryWorkoutRepository()
+        ), repo)
     }
 
     @Test("Enviar põe a mensagem na tela e limpa o campo")
@@ -171,7 +176,12 @@ struct ConversationViewModelTests {
         let repo = InMemoryChatRepository()
         _ = try await repo.createGroup(named: "Corrida", with: [])
         let resumo = try #require(try await repo.summaries().first)
-        let model = ConversationViewModel(summary: resumo, repository: repo)
+        let model = ConversationViewModel(
+            summary: resumo,
+            repository: repo,
+            invites: InMemoryWorkoutRepository(),
+            workouts: InMemoryWorkoutRepository()
+        )
         await model.load()
         #expect(model.canManageLink)
         #expect(model.inviteLink == nil)
@@ -192,7 +202,12 @@ struct ConversationViewModelTests {
         let grupo = try await repo.createGroup(named: "Corrida", with: [])
         let link = try await repo.createInviteLink(for: grupo.id)
         let resumo = try #require(try await repo.summaries().first)
-        let model = ConversationViewModel(summary: resumo, repository: repo)
+        let model = ConversationViewModel(
+            summary: resumo,
+            repository: repo,
+            invites: InMemoryWorkoutRepository(),
+            workouts: InMemoryWorkoutRepository()
+        )
 
         await model.load()
 

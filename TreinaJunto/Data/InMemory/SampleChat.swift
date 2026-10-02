@@ -1,8 +1,9 @@
 import Foundation
 
 extension SampleData {
-    /// Monta o chat com um cenário plausível: já me dei bem com a Marina e
-    /// conversamos; o Rafael me curtiu e está esperando eu curtir de volta.
+    /// Monta o chat com um cenário plausível: já me dei bem com a Marina,
+    /// conversamos e ela me chamou para o treino dela; o Rafael me curtiu e
+    /// está esperando eu curtir de volta.
     ///
     /// Sem isto a aba Chat nasceria vazia enquanto não houver servidor.
     static func seededChatRepository() -> InMemoryChatRepository {
@@ -30,6 +31,12 @@ extension SampleData {
                     authorID: meID,
                     content: .text("Corro sim! Geralmente no Parque Vaca Brava"),
                     createdAt: Date().addingTimeInterval(-6800)
+                ),
+                ChatMessage(
+                    conversationID: conversa.id,
+                    authorID: marina.id,
+                    content: .workoutInvite(workoutID: marinaWorkoutID),
+                    createdAt: Date().addingTimeInterval(-600)
                 )
             ]
         }

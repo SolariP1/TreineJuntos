@@ -2,8 +2,8 @@ import SwiftUI
 
 struct PersonCardView: View {
     let person: WorkoutPartner
-    let isInvited: Bool
-    var onInvite: () -> Void
+    let isLiked: Bool
+    var onLike: () -> Void
     var onOpenProfile: () -> Void
 
     private var style: SportStyle {
@@ -12,7 +12,7 @@ struct PersonCardView: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            // The identity area opens the portfolio; the invite button stays
+            // The identity area opens the portfolio; the like button stays
             // its own control so the two gestures never fight.
             Button(action: onOpenProfile) {
                 HStack(spacing: 12) {
@@ -54,24 +54,20 @@ struct PersonCardView: View {
             }
             .buttonStyle(.pressable)
 
-            Button(action: onInvite) {
-                Group {
-                    if isInvited {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 14, weight: .bold))
-                    } else {
-                        Image(systemName: "hand.wave.fill")
-                            .font(.system(size: 14, weight: .semibold))
-                    }
-                }
-                .frame(width: 46, height: 46)
+            // Curtir, não convidar: o convite para treino sai da conversa,
+            // que só existe depois da curtida mútua (docs/PRODUTO.md §9).
+            Button(action: onLike) {
+                Image(systemName: isLiked ? "heart.fill" : "heart")
+                    .font(.system(size: 16, weight: .semibold))
+                    .frame(width: 46, height: 46)
             }
-            .foregroundStyle(isInvited ? style.deep : .white)
+            .foregroundStyle(isLiked ? style.deep : .white)
             .background(
-                isInvited ? AnyShapeStyle(.white.opacity(0.9)) : AnyShapeStyle(style.base),
+                isLiked ? AnyShapeStyle(.white.opacity(0.9)) : AnyShapeStyle(style.base),
                 in: RoundedRectangle(cornerRadius: 15, style: .continuous)
             )
-            .disabled(isInvited)
+            .disabled(isLiked)
+            .accessibilityLabel(isLiked ? "Você curtiu \(person.name)" : "Curtir \(person.name)")
             .buttonStyle(.pressable)
         }
         .padding(13)

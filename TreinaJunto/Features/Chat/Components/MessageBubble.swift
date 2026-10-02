@@ -6,6 +6,9 @@ struct MessageBubble: View {
     let isMine: Bool
     /// Nome de quem escreveu, só no grupo e só nas mensagens dos outros.
     var authorName: String?
+    /// O treino do convite, quando a mensagem é um convite.
+    var workoutCard: ConversationViewModel.WorkoutCard?
+    var onRespond: (Bool) -> Void = { _ in }
 
     var body: some View {
         HStack {
@@ -43,13 +46,24 @@ struct MessageBubble: View {
                 )
 
         case .workoutInvite:
-            // O card de verdade, com Aceitar e Recusar, chega com o convite
-            // pela vaga do treino.
-            Label("Convite para treinar", systemImage: "figure.run")
-                .font(.brand(13, weight: .semibold))
-                .foregroundStyle(Palette.violet.deep)
-                .padding(.horizontal, 14).padding(.vertical, 10)
-                .background(Palette.violet.soft, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            if let workoutCard {
+                WorkoutInviteMessageCard(
+                    workout: workoutCard.workout,
+                    state: workoutCard.state,
+                    onRespond: onRespond
+                )
+            } else {
+                // O treino sumiu (ou ainda está carregando): melhor um aviso
+                // simples do que um card quebrado.
+                Label("Convite para treinar", systemImage: "figure.run")
+                    .font(.brand(13, weight: .semibold))
+                    .foregroundStyle(Palette.violet.deep)
+                    .padding(.horizontal, 14).padding(.vertical, 10)
+                    .background(
+                        Palette.violet.soft,
+                        in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    )
+            }
         }
     }
 }

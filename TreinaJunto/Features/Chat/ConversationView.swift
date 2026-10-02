@@ -36,7 +36,12 @@ struct ConversationView: View {
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: model?.toastMessage)
         .task {
             if model == nil {
-                model = ConversationViewModel(summary: summary, repository: dependencies.chat)
+                model = ConversationViewModel(
+                    summary: summary,
+                    repository: dependencies.chat,
+                    invites: dependencies.invites,
+                    workouts: dependencies.workouts
+                )
             }
             await model?.load()
         }
@@ -52,7 +57,12 @@ struct ConversationView: View {
                         MessageBubble(
                             message: mensagem,
                             isMine: model.isMine(mensagem),
-                            authorName: summary.isGroup ? summary.author(of: mensagem)?.name : nil
+                            authorName: summary.isGroup ? summary.author(of: mensagem)?.name : nil,
+                            workoutCard: workoutCard(for: mensagem, in: model),
+                            onRespond: { aceito in
+                                guard case let .workoutInvite(id) = mensagem.content else { return }
+                                Task { await model.respond(toWorkout: id, accepted: aceito) }
+                            }
                         )
                         .id(mensagem.id)
                     }
@@ -67,6 +77,14 @@ struct ConversationView: View {
                 withAnimation { proxy.scrollTo(ultima, anchor: .bottom) }
             }
         }
+    }
+
+    private func workoutCard(
+        for message: ChatMessage,
+        in model: ConversationViewModel
+    ) -> ConversationViewModel.WorkoutCard? {
+        guard case let .workoutInvite(id) = message.content else { return nil }
+        return model.workoutCards[id]
     }
 
     private func composer(_ model: ConversationViewModel) -> some View {
