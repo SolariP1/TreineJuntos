@@ -209,3 +209,35 @@ actor InMemoryChatRepository: ChatRepository {
         messagesByConversation[conversation.id]?.last?.createdAt ?? conversation.createdAt
     }
 }
+
+#if DEBUG
+    extension InMemoryChatRepository {
+        /// Simula todo mundo que eu curti me curtindo de volta. Devolve
+        /// quantas conversas novas abriram.
+        func debugEveryoneLikesBack() throws -> Int {
+            var novas = 0
+            for id in myLikes where directConversationExists(with: id) == false {
+                if try receiveLike(from: id) != nil {
+                    novas += 1
+                }
+            }
+            return novas
+        }
+
+        /// Um grupo criado por outra pessoa, com link valendo — o que chegaria
+        /// por WhatsApp para alguém abrir.
+        func debugForeignGroupLink(createdBy creatorID: UUID, named name: String) throws -> GroupInviteLink {
+            let grupo = try Conversation.group(named: name, createdBy: creatorID, members: [], now: now())
+            conversationsByID[grupo.id] = grupo
+            let link = GroupInviteLink(conversationID: grupo.id, createdAt: now())
+            links[grupo.id] = link
+            return link
+        }
+
+        private func directConversationExists(with profileID: UUID) -> Bool {
+            conversationsByID.values.contains {
+                $0.kind == .direct && $0.contains(meID) && $0.contains(profileID)
+            }
+        }
+    }
+#endif

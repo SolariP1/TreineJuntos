@@ -17,6 +17,11 @@ struct AppDependencies: Sendable {
     let workouts: WorkoutRepository
     let chat: ChatRepository
     let session: SessionStore
+    #if DEBUG
+        /// Finge o outro lado enquanto não há servidor. `nil` quando algum
+        /// repositório não é o de memória — aí não há o que fingir.
+        let simulator: DebugSimulator?
+    #endif
 
     init(
         partners: PartnerRepository = InMemoryPartnerRepository(),
@@ -34,6 +39,15 @@ struct AppDependencies: Sendable {
         self.profiles = profiles
         self.workouts = workouts ?? treinos
         self.chat = chat
+        #if DEBUG
+            let treinosEmMemoria = self.workouts as? InMemoryWorkoutRepository
+            let chatEmMemoria = chat as? InMemoryChatRepository
+            if let treinosEmMemoria, let chatEmMemoria {
+                simulator = DebugSimulator(workouts: treinosEmMemoria, chat: chatEmMemoria)
+            } else {
+                simulator = nil
+            }
+        #endif
         self.session = session
     }
 

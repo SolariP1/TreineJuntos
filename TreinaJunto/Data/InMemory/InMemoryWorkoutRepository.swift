@@ -202,3 +202,19 @@ extension SampleData {
     /// Identificador de quem está usando o app enquanto não há autenticação.
     static let meID = UUID(uuidString: "00000000-0000-0000-0000-000000000001") ?? UUID()
 }
+
+#if DEBUG
+    extension InMemoryWorkoutRepository {
+        /// Simula a pessoa mais antiga que convidei aceitando. Devolve quem
+        /// entrou, ou `nil` se não havia convite meu esperando resposta.
+        func debugAcceptOldestPendingInvite() async throws -> UUID? {
+            guard let meu = try await activeWorkout(), meu.hostID == meID else { return nil }
+            let pendente = invites.values
+                .filter { $0.workoutID == meu.id && $0.fromProfileID == meID && $0.isPending }
+                .min { $0.createdAt < $1.createdAt }
+            guard let pendente else { return nil }
+            try await respond(to: pendente.id, accepted: true)
+            return pendente.toProfileID
+        }
+    }
+#endif
