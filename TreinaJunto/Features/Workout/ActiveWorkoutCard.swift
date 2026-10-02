@@ -91,8 +91,12 @@ struct ActiveWorkoutCard: View {
                 face(for: participante.profileID)
                     .transition(.scale.combined(with: .opacity))
             }
-            ForEach(0 ..< workout.freeSpots, id: \.self) { _ in
-                emptySlot
+            // Depois de começar, as vagas que sobraram fecham (§9.4): o
+            // treino é de quem está nele.
+            if workout.status == .open {
+                ForEach(0 ..< workout.freeSpots, id: \.self) { _ in
+                    emptySlot
+                }
             }
         }
         .animation(.spring(response: 0.45, dampingFraction: 0.7), value: workout.participants.count)
@@ -120,10 +124,10 @@ struct ActiveWorkoutCard: View {
 
     @ViewBuilder
     private var emptySlot: some View {
-        let podeConvidar = isHost && workout.status == .open
+        let podeConvidar = isHost
         let circulo = Image(systemName: "plus")
             .font(.system(size: 14, weight: .bold))
-            .foregroundStyle(.white.opacity(podeConvidar ? 1 : 0.5))
+            .foregroundStyle(.white.opacity(podeConvidar ? 1 : 0.6))
             .frame(width: 40, height: 40)
             .background(
                 Circle().strokeBorder(.white.opacity(0.7), style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))

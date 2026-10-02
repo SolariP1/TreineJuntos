@@ -23,17 +23,20 @@ final class FeedViewModel {
     private let inviteRepository: InviteRepository
     private let workoutRepository: WorkoutRepository
     private let chatRepository: ChatRepository
+    private let activity: WorkoutActivityPresenting
 
     init(
         partnerRepository: PartnerRepository,
         inviteRepository: InviteRepository,
         workoutRepository: WorkoutRepository,
-        chatRepository: ChatRepository
+        chatRepository: ChatRepository,
+        activity: WorkoutActivityPresenting
     ) {
         self.partnerRepository = partnerRepository
         self.inviteRepository = inviteRepository
         self.workoutRepository = workoutRepository
         self.chatRepository = chatRepository
+        self.activity = activity
     }
 
     func load() async {
@@ -45,6 +48,8 @@ final class FeedViewModel {
             invites = try await pending
             activeWorkout = try await workoutRepository.activeWorkout()
             inviteBalance = try await workoutRepository.inviteBalance()
+            // Ao abrir o app: uma atividade perdida volta, uma sobrando some.
+            syncActivity()
         } catch {
             partners = .failed("Não deu pra carregar quem está perto. Tente de novo.")
         }
@@ -100,6 +105,11 @@ final class FeedViewModel {
     /// Recarrega o treino, para a tela mostrar quem entrou pela conversa.
     func refreshActiveWorkout() async {
         activeWorkout = try? await workoutRepository.activeWorkout()
+        syncActivity()
+    }
+
+    private func syncActivity() {
+        activity.sync(with: activeWorkout, partnerForID: partner(withID:))
     }
 
     /// O rosto de quem está no treino, quando a pessoa é conhecida.
@@ -162,6 +172,7 @@ final class FeedViewModel {
             )
             activeWorkout = try await workoutRepository.activeWorkout()
             inviteBalance = try await workoutRepository.inviteBalance()
+            syncActivity()
             toast("Treino começou. Bom treino!")
         } catch let WorkoutError.notEnoughInvites(needed, available) {
             toast("Você precisa de \(needed) convites e tem \(available).")
@@ -175,6 +186,10 @@ final class FeedViewModel {
         guard let workout = activeWorkout else { return }
         do {
             try await workoutRepository.finish(workoutID: workout.id, present: present)
+            // O tempo final fica um pouco na Dynamic Island antes de sumir.
+            if let encerrado = try await workoutRepository.workout(withID: workout.id) {
+                activity.finish(encerrado, partnerForID: partner(withID:))
+            }
             activeWorkout = nil
             toast("Treino encerrado.")
         } catch {
@@ -199,6 +214,7 @@ final class FeedViewModel {
                 toast("Você saiu do treino.")
             }
             activeWorkout = nil
+            syncActivity()
         } catch {
             // Se falhou, a tela precisa voltar a contar a verdade em vez de
             // mostrar um treino que talvez não exista mais.

@@ -82,7 +82,8 @@ struct FeedView: View {
                     partnerRepository: dependencies.partners,
                     inviteRepository: dependencies.invites,
                     workoutRepository: dependencies.workouts,
-                    chatRepository: dependencies.chat
+                    chatRepository: dependencies.chat,
+                    activity: LiveWorkoutActivity.shared
                 )
             }
             await model?.load()

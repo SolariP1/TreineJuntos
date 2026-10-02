@@ -21,13 +21,15 @@ struct FeedViewModelTests {
     private func makeModel(
         partners: PartnerRepository = InMemoryPartnerRepository(),
         workouts: InMemoryWorkoutRepository = SampleData.seededWorkoutRepository(),
-        chat: ChatRepository = SampleData.seededChatRepository()
+        chat: ChatRepository = SampleData.seededChatRepository(),
+        activity: WorkoutActivityPresenting? = nil
     ) -> FeedViewModel {
         FeedViewModel(
             partnerRepository: partners,
             inviteRepository: workouts,
             workoutRepository: workouts,
-            chatRepository: chat
+            chatRepository: chat,
+            activity: activity ?? NoWorkoutActivity()
         )
     }
 
