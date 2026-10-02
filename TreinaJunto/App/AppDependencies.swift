@@ -15,6 +15,7 @@ struct AppDependencies: Sendable {
     let invites: InviteRepository
     let profiles: ProfileRepository
     let workouts: WorkoutRepository
+    let chat: ChatRepository
     let session: SessionStore
 
     init(
@@ -22,6 +23,7 @@ struct AppDependencies: Sendable {
         invites: InviteRepository? = nil,
         profiles: ProfileRepository = InMemoryProfileRepository(),
         workouts: WorkoutRepository? = nil,
+        chat: ChatRepository = SampleData.seededChatRepository(),
         session: SessionStore = UserDefaultsSessionStore()
     ) {
         // Treinos e convites são o mesmo ator: aceitar um convite entra no
@@ -31,6 +33,7 @@ struct AppDependencies: Sendable {
         self.invites = invites ?? treinos
         self.profiles = profiles
         self.workouts = workouts ?? treinos
+        self.chat = chat
         self.session = session
     }
 
