@@ -9,7 +9,10 @@ import Foundation
 final class FeedViewModel {
     private(set) var partners: LoadState<[WorkoutPartner]> = .idle
     private(set) var invites: [ReceivedInvite] = []
-    private(set) var invitedIDs: Set<UUID> = []
+    /// Quem eu já curti nesta sessão, para o botão ficar marcado.
+    private(set) var likedIDs: Set<UUID> = []
+    /// As conversas para onde posso mandar o convite do meu treino.
+    private(set) var inviteTargets: [ConversationSummary] = []
 
     var toastMessage: String?
 
@@ -19,15 +22,18 @@ final class FeedViewModel {
     private let partnerRepository: PartnerRepository
     private let inviteRepository: InviteRepository
     private let workoutRepository: WorkoutRepository
+    private let chatRepository: ChatRepository
 
     init(
         partnerRepository: PartnerRepository,
         inviteRepository: InviteRepository,
-        workoutRepository: WorkoutRepository
+        workoutRepository: WorkoutRepository,
+        chatRepository: ChatRepository
     ) {
         self.partnerRepository = partnerRepository
         self.inviteRepository = inviteRepository
         self.workoutRepository = workoutRepository
+        self.chatRepository = chatRepository
     }
 
     func load() async {
@@ -44,28 +50,61 @@ final class FeedViewModel {
         }
     }
 
-    /// Convida alguém para o meu treino aberto.
-    ///
-    /// Sem treino aberto não há para onde convidar — é o que separa "mandar
-    /// um oi" de "vem treinar comigo às 7h".
-    func invite(_ partner: WorkoutPartner) async {
-        guard let workout = activeWorkout, workout.status == .open else {
-            toast("Abra um treino antes de convidar alguém.")
-            return
-        }
+    /// Curto alguém. Se a pessoa já tinha me curtido, a conversa abre na
+    /// hora; senão fica a curtida, e ninguém fica sabendo até ser mútua
+    /// (docs/PRODUTO.md §9.1).
+    func like(_ partner: WorkoutPartner) async {
+        guard !likedIDs.contains(partner.id) else { return }
         do {
-            try await inviteRepository.invite(partnerID: partner.id, toWorkout: workout.id)
-            invitedIDs.insert(partner.id)
-            toast("Convite enviado para \(partner.name)!")
+            let conversa = try await chatRepository.like(partner.id)
+            likedIDs.insert(partner.id)
+            toast(
+                conversa == nil
+                    ? "Você curtiu \(partner.name)."
+                    : "Vocês se curtiram! A conversa com \(partner.name) está no Chat."
+            )
+        } catch {
+            toast("Não deu pra curtir agora. Tente de novo.")
+        }
+    }
+
+    func hasLiked(_ partner: WorkoutPartner) -> Bool {
+        likedIDs.contains(partner.id)
+    }
+
+    // MARK: - Convidar pela vaga
+
+    /// Carrega as conversas para a folha de convidar, que abre ao tocar
+    /// numa vaga livre do treino.
+    func loadInviteTargets() async {
+        inviteTargets = await (try? chatRepository.summaries()) ?? []
+    }
+
+    /// Manda o convite do meu treino para uma conversa. Num grupo, todo
+    /// mundo é chamado e quem aceitar primeiro fica com a vaga.
+    func inviteToActiveWorkout(_ summary: ConversationSummary) async {
+        guard let workout = activeWorkout else { return }
+        do {
+            let sender = WorkoutInviteSender(invites: inviteRepository, chat: chatRepository)
+            try await sender.send(workout, to: summary)
+            toast("Convite enviado para \(summary.title)!")
         } catch InviteError.alreadyInvited {
-            // Já convidou: o botão devia estar desabilitado, então isto é
-            // corrida de toque duplo. Só realinha a tela com a verdade.
-            invitedIDs.insert(partner.id)
+            toast("\(summary.title) já tem convite para este treino.")
         } catch WorkoutError.full {
             toast("Seu treino já está cheio.")
         } catch {
             toast("Não deu pra enviar o convite. Tente de novo.")
         }
+    }
+
+    /// Recarrega o treino, para a tela mostrar quem entrou pela conversa.
+    func refreshActiveWorkout() async {
+        activeWorkout = try? await workoutRepository.activeWorkout()
+    }
+
+    /// O rosto de quem está no treino, quando a pessoa é conhecida.
+    func partner(withID id: UUID) -> WorkoutPartner? {
+        partners.value?.first { $0.id == id }
     }
 
     /// Aceitar entra no treino de quem convidou.
@@ -166,10 +205,6 @@ final class FeedViewModel {
             activeWorkout = try? await workoutRepository.activeWorkout()
             toast(souAnfitriao ? "Não deu pra cancelar o treino." : "Não deu pra sair do treino.")
         }
-    }
-
-    func hasInvited(_ partner: WorkoutPartner) -> Bool {
-        invitedIDs.contains(partner.id)
     }
 
     private func toast(_ message: String) {

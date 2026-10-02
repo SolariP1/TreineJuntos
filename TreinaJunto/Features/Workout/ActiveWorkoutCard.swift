@@ -10,6 +10,10 @@ struct ActiveWorkoutCard: View {
     var onStart: () -> Void
     var onFinish: () -> Void
     var onLeave: () -> Void
+    /// Tocar numa vaga livre. Só o anfitrião convida, e só antes de começar.
+    var onInviteToSlot: () -> Void = {}
+    /// Quem é cada participante, para mostrar o rosto na vaga.
+    var partnerForID: (UUID) -> WorkoutPartner? = { _ in nil }
 
     private var style: SportStyle {
         workout.sport.style
@@ -24,10 +28,16 @@ struct ActiveWorkoutCard: View {
         VStack(alignment: .leading, spacing: 14) {
             header
 
+            slots
+
             HStack(spacing: 8) {
                 statusPill
                 Spacer(minLength: 0)
-                actionButton
+                // Quem abriu o treino é quem começa e encerra; o convidado
+                // acompanha.
+                if isHost {
+                    actionButton
+                }
             }
         }
         .padding(18)
@@ -70,6 +80,61 @@ struct ActiveWorkoutCard: View {
                 .buttonStyle(.pressable)
                 .accessibilityLabel(isHost ? "Cancelar treino" : "Sair do treino")
             }
+        }
+    }
+
+    /// Uma bolinha por vaga: o rosto de quem entrou, ou um + para chamar
+    /// alguém (docs/PRODUTO.md §9.3).
+    private var slots: some View {
+        HStack(spacing: 8) {
+            ForEach(workout.participants) { participante in
+                face(for: participante.profileID)
+                    .transition(.scale.combined(with: .opacity))
+            }
+            ForEach(0 ..< workout.freeSpots, id: \.self) { _ in
+                emptySlot
+            }
+        }
+        .animation(.spring(response: 0.45, dampingFraction: 0.7), value: workout.participants.count)
+    }
+
+    @ViewBuilder
+    private func face(for profileID: UUID) -> some View {
+        if profileID == SampleData.meID {
+            Text("Eu")
+                .font(.brand(12, weight: .bold))
+                .foregroundStyle(style.deep)
+                .frame(width: 40, height: 40)
+                .background(.white, in: Circle())
+                .accessibilityLabel("Você")
+        } else if let pessoa = partnerForID(profileID) {
+            PartnerFace(partner: pessoa, size: 40)
+                .overlay(Circle().stroke(.white, lineWidth: 2))
+        } else {
+            Image(systemName: "person.fill")
+                .foregroundStyle(.white)
+                .frame(width: 40, height: 40)
+                .background(.white.opacity(0.3), in: Circle())
+        }
+    }
+
+    @ViewBuilder
+    private var emptySlot: some View {
+        let podeConvidar = isHost && workout.status == .open
+        let circulo = Image(systemName: "plus")
+            .font(.system(size: 14, weight: .bold))
+            .foregroundStyle(.white.opacity(podeConvidar ? 1 : 0.5))
+            .frame(width: 40, height: 40)
+            .background(
+                Circle().strokeBorder(.white.opacity(0.7), style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
+            )
+
+        if podeConvidar {
+            Button(action: onInviteToSlot) { circulo }
+                .buttonStyle(.pressable)
+                .accessibilityLabel("Convidar alguém para a vaga")
+        } else {
+            circulo.accessibilityHidden(true)
         }
     }
 

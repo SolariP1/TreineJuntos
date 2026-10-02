@@ -1,6 +1,10 @@
 import Foundation
 
 extension SampleData {
+    /// O treino da Marina tem id fixo para o chat de exemplo poder mandar o
+    /// convite dele na conversa — são dois repositórios montados à parte.
+    static let marinaWorkoutID = UUID(uuidString: "00000000-0000-0000-0000-0000000000A1") ?? UUID()
+
     /// Monta o repositório com um cenário plausível: duas pessoas perto
     /// abriram treino e me convidaram.
     ///
@@ -14,6 +18,7 @@ extension SampleData {
         var convites: [WorkoutInvite] = []
 
         if let camila, let treino = try? Workout(
+            id: marinaWorkoutID,
             hostID: camila.id,
             sport: .corrida,
             maxParticipants: 2,

@@ -12,6 +12,10 @@ protocol InviteRepository: Sendable {
     /// Convido alguém para um treino meu.
     func invite(partnerID: UUID, toWorkout workoutID: UUID) async throws
 
+    /// O convite que recebi para um treino, respondido ou não. É o que o
+    /// card na conversa usa para saber se mostra Aceitar ou "Você entrou".
+    func myInvite(toWorkout workoutID: UUID) async throws -> WorkoutInvite?
+
     /// Aceito ou recuso. Aceitar entra no treino.
     func respond(to inviteID: UUID, accepted: Bool) async throws
 

@@ -7,15 +7,33 @@ final class ConversationViewModel {
     let summary: ConversationSummary
     private(set) var messages: [ChatMessage] = []
     private(set) var inviteLink: GroupInviteLink?
+    /// O treino e o estado do card de cada convite de treino da conversa,
+    /// pela chave do treino.
+    private(set) var workoutCards: [UUID: WorkoutCard] = [:]
     var draft = ""
     var toastMessage: String?
 
+    struct WorkoutCard: Equatable {
+        let workout: Workout
+        let state: WorkoutInviteCardState
+    }
+
     private let repository: ChatRepository
+    private let invites: InviteRepository
+    private let workouts: WorkoutRepository
     private let meID: UUID
 
-    init(summary: ConversationSummary, repository: ChatRepository, meID: UUID = SampleData.meID) {
+    init(
+        summary: ConversationSummary,
+        repository: ChatRepository,
+        invites: InviteRepository,
+        workouts: WorkoutRepository,
+        meID: UUID = SampleData.meID
+    ) {
         self.summary = summary
         self.repository = repository
+        self.invites = invites
+        self.workouts = workouts
         self.meID = meID
     }
 
@@ -35,6 +53,7 @@ final class ConversationViewModel {
     func load() async {
         do {
             messages = try await repository.messages(in: summary.id)
+            await refreshWorkoutCards()
             if canManageLink {
                 inviteLink = try await repository.currentInviteLink(for: summary.id)
             }
@@ -56,6 +75,48 @@ final class ConversationViewModel {
             draft = texto
             toast("Não deu pra enviar. Tente de novo.")
         }
+    }
+
+    /// Aceito ou recuso o convite de um card. Aceitar entra no treino.
+    func respond(toWorkout workoutID: UUID, accepted: Bool) async {
+        guard case let .canRespond(inviteID) = workoutCards[workoutID]?.state else { return }
+        do {
+            try await invites.respond(to: inviteID, accepted: accepted)
+            if accepted {
+                toast("Você entrou no treino!")
+            }
+        } catch WorkoutError.full {
+            toast("Alguém pegou a última vaga antes.")
+        } catch InviteError.workoutNotOpen, WorkoutError.notOpen {
+            toast("Esse treino já começou.")
+        } catch WorkoutError.alreadyHasActiveWorkout {
+            toast("Você já está em outro treino.")
+        } catch {
+            toast("Não deu pra responder agora.")
+        }
+        // Em qualquer caso, o card passa a contar o estado de agora.
+        await refreshWorkoutCards()
+    }
+
+    /// Relê os treinos dos convites. O estado muda por fora da conversa —
+    /// alguém entra, o treino enche, começa.
+    func refreshWorkoutCards() async {
+        let ids = Set(messages.compactMap { mensagem -> UUID? in
+            if case let .workoutInvite(workoutID) = mensagem.content {
+                return workoutID
+            }
+            return nil
+        })
+        var cards: [UUID: WorkoutCard] = [:]
+        for id in ids {
+            guard let treino = try? await workouts.workout(withID: id) else { continue }
+            let meu = try? await invites.myInvite(toWorkout: id)
+            cards[id] = WorkoutCard(
+                workout: treino,
+                state: .make(workout: treino, myInvite: meu, meID: meID)
+            )
+        }
+        workoutCards = cards
     }
 
     func createInviteLink() async {

@@ -37,6 +37,10 @@ actor InMemoryWorkoutRepository: WorkoutRepository, InviteRepository {
         workouts.values.first { $0.contains(meID) && ($0.status == .open || $0.status == .started) }
     }
 
+    func workout(withID id: UUID) async throws -> Workout? {
+        workouts[id]
+    }
+
     func nearbyOpenWorkouts(withinMeters _: Int) async throws -> [Workout] {
         workouts.values
             .filter { $0.status == .open && !$0.contains(meID) }
@@ -130,8 +134,26 @@ actor InMemoryWorkoutRepository: WorkoutRepository, InviteRepository {
         invites[convite.id] = convite
     }
 
+    func myInvite(toWorkout workoutID: UUID) async throws -> WorkoutInvite? {
+        // O mais recente: se fui convidado de novo depois de recusar, vale o
+        // último.
+        invites.values
+            .filter { $0.workoutID == workoutID && $0.toProfileID == meID }
+            .max { $0.createdAt < $1.createdAt }
+    }
+
     func respond(to inviteID: UUID, accepted: Bool) async throws {
         guard var convite = invites[inviteID] else { throw InviteError.inviteNotFound }
+
+        // Um treino de pé por vez, como ao abrir: aceitar estando em outro
+        // deixaria a pessoa em dois lugares e a Live Activity sem saber
+        // qual mostrar.
+        if accepted, convite.toProfileID == meID {
+            let ativo = try await activeWorkout()
+            if let ativo, ativo.id != convite.workoutID {
+                throw WorkoutError.alreadyHasActiveWorkout
+            }
+        }
 
         // Entrar no treino primeiro: se o treino encheu enquanto o convite
         // estava parado, o convite não pode virar aceito no vazio.

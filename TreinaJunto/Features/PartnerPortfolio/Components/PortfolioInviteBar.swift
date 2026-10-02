@@ -1,6 +1,9 @@
 import SwiftUI
 
-/// A barra fixa no rodapé do portfólio, com o convite.
+/// A barra fixa no rodapé do portfólio, com a curtida.
+///
+/// Curtir, e não convidar: o convite para treino sai da conversa, que nasce
+/// da curtida mútua (docs/PRODUTO.md §9).
 struct PortfolioInviteBar: View {
     let partnerName: String
     let style: SportStyle
@@ -9,8 +12,8 @@ struct PortfolioInviteBar: View {
     var body: some View {
         Button(action: onInvite) {
             HStack(spacing: 8) {
-                Image(systemName: "hand.wave.fill").font(.system(size: 14, weight: .semibold))
-                Text("Convidar \(partnerName) pra treinar")
+                Image(systemName: "heart.fill").font(.system(size: 14, weight: .semibold))
+                Text("Curtir \(partnerName)")
                     .font(.brand(15, weight: .bold))
             }
             .foregroundStyle(.white)

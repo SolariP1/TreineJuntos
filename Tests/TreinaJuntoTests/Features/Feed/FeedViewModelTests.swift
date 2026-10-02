@@ -20,12 +20,14 @@ struct FeedViewModelTests {
     /// Treinos e convites vêm do mesmo ator, como no app.
     private func makeModel(
         partners: PartnerRepository = InMemoryPartnerRepository(),
-        workouts: InMemoryWorkoutRepository = SampleData.seededWorkoutRepository()
+        workouts: InMemoryWorkoutRepository = SampleData.seededWorkoutRepository(),
+        chat: ChatRepository = SampleData.seededChatRepository()
     ) -> FeedViewModel {
         FeedViewModel(
             partnerRepository: partners,
             inviteRepository: workouts,
-            workoutRepository: workouts
+            workoutRepository: workouts,
+            chatRepository: chat
         )
     }
 
@@ -56,32 +58,96 @@ struct FeedViewModelTests {
         #expect(model.partners.value == nil)
     }
 
-    @Test("Convidar marca a pessoa e avisa na tela")
-    func invitingMarksAndToasts() async throws {
-        let model = makeModel()
+    // MARK: - Curtir
+
+    @Test("Curtir de um lado só marca a pessoa e não abre conversa")
+    func oneSidedLike() async throws {
+        let chat = InMemoryChatRepository()
+        let model = makeModel(chat: chat)
         await model.load()
-        await model.openWorkout(sport: .corrida, size: 3, when: "Agora", gym: nil)
         let marina = try #require(model.partners.value?.first)
 
-        await model.invite(marina)
+        await model.like(marina)
 
-        #expect(model.hasInvited(marina))
-        #expect(model.toastMessage?.contains(marina.name) == true)
+        #expect(model.hasLiked(marina))
+        #expect(model.toastMessage == "Você curtiu Marina.")
+        #expect(try await chat.conversations().isEmpty)
     }
 
-    @Test("Tocar duas vezes em convidar não desfaz o convite")
-    func doubleTapKeepsTheInvite() async throws {
-        // O repositório recusa o segundo convite; a tela precisa continuar
-        // mostrando a pessoa como convidada, não voltar atrás.
-        let model = makeModel()
+    @Test("Curtida mútua avisa que a conversa está no Chat")
+    func mutualLikeOpensChat() async throws {
+        let marina = SampleData.partners[0]
+        let chat = InMemoryChatRepository(likedMeBy: [marina.id])
+        let model = makeModel(chat: chat)
         await model.load()
-        await model.openWorkout(sport: .corrida, size: 3, when: "Agora", gym: nil)
+
+        await model.like(marina)
+
+        #expect(model.toastMessage?.contains("Vocês se curtiram") == true)
+        #expect(try await chat.conversations().count == 1)
+    }
+
+    @Test("Tocar duas vezes em curtir não faz nada a mais")
+    func doubleLikeIsIgnored() async throws {
+        let model = makeModel(chat: InMemoryChatRepository())
+        await model.load()
         let marina = try #require(model.partners.value?.first)
 
-        await model.invite(marina)
-        await model.invite(marina)
+        await model.like(marina)
+        model.toastMessage = nil
+        await model.like(marina)
 
-        #expect(model.hasInvited(marina))
+        #expect(model.hasLiked(marina))
+        #expect(model.toastMessage == nil)
+    }
+
+    // MARK: - Convidar pela vaga
+
+    @Test("Convidar pela vaga manda o convite como mensagem na conversa")
+    func slotInviteSendsMessage() async throws {
+        let marina = SampleData.partners[0]
+        let chat = InMemoryChatRepository(likedMeBy: [marina.id])
+        try await chat.like(marina.id)
+        let treinos = InMemoryWorkoutRepository()
+        let model = makeModel(workouts: treinos, chat: chat)
+        await model.load()
+        await model.openWorkout(sport: .corrida, size: 3, when: "Agora", gym: nil)
+        await model.loadInviteTargets()
+        let conversa = try #require(model.inviteTargets.first)
+
+        await model.inviteToActiveWorkout(conversa)
+
+        #expect(model.toastMessage == "Convite enviado para Marina!")
+        let mensagens = try await chat.messages(in: conversa.id)
+        #expect(try mensagens.last?.content == .workoutInvite(workoutID: #require(model.activeWorkout?.id)))
+    }
+
+    @Test("Convidar a mesma conversa duas vezes avisa em vez de repetir")
+    func slotInviteTwiceWarns() async throws {
+        let marina = SampleData.partners[0]
+        let chat = InMemoryChatRepository(likedMeBy: [marina.id])
+        try await chat.like(marina.id)
+        let model = makeModel(workouts: InMemoryWorkoutRepository(), chat: chat)
+        await model.load()
+        await model.openWorkout(sport: .corrida, size: 3, when: "Agora", gym: nil)
+        await model.loadInviteTargets()
+        let conversa = try #require(model.inviteTargets.first)
+
+        await model.inviteToActiveWorkout(conversa)
+        await model.inviteToActiveWorkout(conversa)
+
+        #expect(model.toastMessage == "Marina já tem convite para este treino.")
+        #expect(try await chat.messages(in: conversa.id).count == 1)
+    }
+
+    @Test("O rosto de quem entrou vem dos parceiros conhecidos")
+    func partnerFaceLookup() async {
+        let model = makeModel()
+        await model.load()
+        let marina = SampleData.partners[0]
+
+        #expect(model.partner(withID: marina.id)?.name == "Marina")
+        #expect(model.partner(withID: UUID()) == nil)
     }
 
     @Test("Responder tira o convite da lista", arguments: [true, false])
@@ -95,20 +161,6 @@ struct FeedViewModelTests {
 
         #expect(model.invites.count == antes - 1)
         #expect(!model.invites.contains { $0.id == primeiro.id })
-    }
-
-    @Test("Sem treino aberto, convidar avisa em vez de falhar calado")
-    func invitingWithoutAWorkoutExplainsWhy() async throws {
-        // Convite sem treino não existe mais: é o que separa "manda um oi"
-        // de "vem treinar comigo às 7h".
-        let model = makeModel()
-        await model.load()
-        let marina = try #require(model.partners.value?.first)
-
-        await model.invite(marina)
-
-        #expect(model.hasInvited(marina) == false)
-        #expect(model.toastMessage?.contains("Abra um treino") == true)
     }
 
     @Test("Aceitar um convite põe você no treino de quem chamou")

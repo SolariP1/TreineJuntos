@@ -10,6 +10,7 @@ struct FeedView: View {
     /// por enquanto o treino não é em academia nenhuma.
     private let gym: String? = nil
     @State private var selectedPartner: WorkoutPartner?
+    @State private var showInviteSheet = false
     @State private var appeared = false
 
     var body: some View {
@@ -33,7 +34,7 @@ struct FeedView: View {
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(item: $selectedPartner) { partner in
                 PartnerPortfolioView(partner: partner) {
-                    Task { await model?.invite(partner) }
+                    Task { await model?.like(partner) }
                     selectedPartner = nil
                 }
             }
@@ -57,6 +58,13 @@ struct FeedView: View {
                 Text("Levar \(workout.guestCount) na \(gym) gasta \(workout.guestCount) convites.")
             }
         }
+        .sheet(isPresented: $showInviteSheet) {
+            if let model {
+                InviteToWorkoutSheet(targets: model.inviteTargets) { conversa in
+                    Task { await model.inviteToActiveWorkout(conversa) }
+                }
+            }
+        }
         .sheet(isPresented: $showAvailabilitySheet) {
             if let model {
                 OpenWorkoutSheet(gym: gym, inviteBalance: model.inviteBalance) { sport, size, time in
@@ -73,7 +81,8 @@ struct FeedView: View {
                 model = FeedViewModel(
                     partnerRepository: dependencies.partners,
                     inviteRepository: dependencies.invites,
-                    workoutRepository: dependencies.workouts
+                    workoutRepository: dependencies.workouts,
+                    chatRepository: dependencies.chat
                 )
             }
             await model?.load()
@@ -104,7 +113,14 @@ struct FeedView: View {
                             workout: workout,
                             onStart: { startWorkout(workout, model: model) },
                             onFinish: { finishWorkout(workout, model: model) },
-                            onLeave: { Task { await model.leaveOrCancelActiveWorkout() } }
+                            onLeave: { Task { await model.leaveOrCancelActiveWorkout() } },
+                            onInviteToSlot: {
+                                Task {
+                                    await model.loadInviteTargets()
+                                    showInviteSheet = true
+                                }
+                            },
+                            partnerForID: model.partner(withID:)
                         )
                         .sectionEntrance(appeared, index: 1)
                     } else {
@@ -227,8 +243,8 @@ struct FeedView: View {
                 ForEach(Array(people.enumerated()), id: \.element.id) { index, person in
                     PersonCardView(
                         person: person,
-                        isInvited: model.hasInvited(person),
-                        onInvite: { Task { await model.invite(person) } },
+                        isLiked: model.hasLiked(person),
+                        onLike: { Task { await model.like(person) } },
                         onOpenProfile: { selectedPartner = person }
                     )
                     .scaleEffect(appeared ? 1 : 0.94)
