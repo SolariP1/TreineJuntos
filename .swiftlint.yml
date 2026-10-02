@@ -1,6 +1,8 @@
 # Análise estática — CONVENTIONS.md §6
 included:
   - TreinaJunto
+  - TreinaJuntoWidgets
+  - Shared
   - Tests
 
 excluded:

@@ -19,10 +19,15 @@ targets:
     platform: iOS
     sources:
       - path: TreinaJunto
+      - path: Shared
+    dependencies:
+      - target: TreinaJuntoWidgets
     info:
       path: TreinaJunto/Info.plist
       properties:
         UILaunchScreen: {}
+        # Live Activity do treino iniciado (docs/PRODUTO.md §9.4).
+        NSSupportsLiveActivities: true
         # Link de convite de grupo: treinajunto://grupo/<token>
         CFBundleURLTypes:
           - CFBundleURLName: com.lucasalmeida.treinajunto
@@ -50,6 +55,26 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         # Testes usam @testable import — exige o app compilado como testável.
         ENABLE_TESTABILITY: YES
+
+  # A Live Activity não roda no target principal: precisa de uma extensão
+  # de widget, que o app embute.
+  TreinaJuntoWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: TreinaJuntoWidgets
+      - path: Shared
+    info:
+      path: TreinaJuntoWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: TreinaJunto
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lucasalmeida.treinajunto.widgets
+        TARGETED_DEVICE_FAMILY: "1"
+        SKIP_INSTALL: YES
 
   TreinaJuntoTests:
     type: bundle.unit-test
