@@ -104,9 +104,11 @@ vazia.
 
 A conversa já existe desde o item 2. Aqui ela ganha foto.
 
-- [ ] Mandar foto dentro do treino iniciado
+- [ ] Mandar foto dentro do treino iniciado ([PRODUTO.md §10](docs/PRODUTO.md))
 - [ ] **Comprimir a foto no aparelho** antes de subir
-- [ ] **Limitar fotos por treino**
+- [ ] **Limitar fotos por treino** — 20, provisório
+- [ ] Botão de foto na Dynamic Island expandida
+- [ ] Tocar num dia do histórico abre o feed daquele treino
 
 > As duas últimas não são detalhe: Storage é o primeiro limite do plano
 > gratuito do Supabase que você vai bater. Sem elas, semanas.

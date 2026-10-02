@@ -645,3 +645,56 @@ precisa mudar**. O que muda é por onde o convite chega até ele.
 - **Validade do link de grupo.** Sugestão: 7 dias.
 - **Tamanho máximo de grupo.** O teto de 6 é do treino, não da conversa.
 - **Desfazer curtida.** A conversa some para os dois, ou fica só arquivada?
+
+---
+
+## 10. Fotos do treino e o dia no histórico
+
+Decidido em 02/10. Fecha o ciclo do treino: o que acontece durante ele fica
+registrado, e quem visita o perfil de alguém vê como foram os treinos.
+
+### 10.1 Foto durante o treino
+
+- Só **quem está no treino** registra foto, e só enquanto ele está
+  **iniciado**. Treino aberto ainda não aconteceu; encerrado já acabou.
+- A foto é **comprimida no aparelho** antes de ir para qualquer lugar: lado
+  maior de 1600 px, JPEG em qualidade 0,7. Uma foto de câmera de 3 a 5 MB
+  vira algo perto de 300 KB. É a defesa do §7 contra o limite de Storage.
+- **Até 20 fotos por treino**, somando todos os participantes. O número é
+  provisório: é o "limite de fotos por treino" que o backlog deixou em aberto.
+- As fotos aparecem no card do treino, no Feed, enquanto ele dura.
+
+### 10.2 A Dynamic Island expandida
+
+Segurar a ilha mostra mais do que o tempo:
+
+```
+┌──────────────────────────────────────────┐
+│ 🏃 Corrida              ⏱ 32:14         │
+│ Parque Vaca Brava · começou 07:02        │
+│ (Eu)(M)(B)  3 pessoas      [ 📷 Foto ]   │
+│ 4 fotos                                  │
+└──────────────────────────────────────────┘
+```
+
+O botão **Foto** abre o app direto na câmera do treino. A Live Activity não
+consegue abrir a câmera sozinha — o sistema não deixa —, então o toque leva
+ao app, que já abre a folha de foto.
+
+### 10.3 O dia no histórico
+
+No portfólio de outra pessoa, o calendário mostra os dias em que ela treinou
+com alguém. **Tocar num desses dias abre o feed daquele treino:**
+
+| Seção | O que mostra |
+|---|---|
+| Cabeçalho | esporte, data, horário, duração e lugar |
+| Quem foi | o rosto e o nome de cada participante |
+| Fotos | as fotos tiradas durante o treino |
+| Avaliações | o que os participantes disseram depois |
+
+- O histórico vem dos **treinos encerrados**. Um treino que eu encerro com a
+  Marina aparece no dia de hoje do calendário dela.
+- Dia sem treino junto não abre nada — não há o que mostrar.
+- Avaliar depois do treino ainda não existe (backlog, item 4); até lá, o
+  treino real mostra "ainda sem avaliações".
