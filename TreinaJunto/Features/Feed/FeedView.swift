@@ -11,6 +11,7 @@ struct FeedView: View {
     private let gym: String? = nil
     @State private var selectedPartner: WorkoutPartner?
     @State private var showInviteSheet = false
+    @State private var takePhoto = false
     @State private var appeared = false
 
     var body: some View {
@@ -58,6 +59,9 @@ struct FeedView: View {
                 Text("Levar \(workout.guestCount) na \(gym) gasta \(workout.guestCount) convites.")
             }
         }
+        .workoutPhotoCapture(isPresented: $takePhoto) { jpeg in
+            Task { await model?.addPhoto(jpeg) }
+        }
         .sheet(isPresented: $showInviteSheet) {
             if let model {
                 InviteToWorkoutSheet(targets: model.inviteTargets) { conversa in
@@ -83,6 +87,7 @@ struct FeedView: View {
                     inviteRepository: dependencies.invites,
                     workoutRepository: dependencies.workouts,
                     chatRepository: dependencies.chat,
+                    photoRepository: dependencies.photos,
                     activity: LiveWorkoutActivity.shared
                 )
             }
@@ -121,7 +126,10 @@ struct FeedView: View {
                                     showInviteSheet = true
                                 }
                             },
-                            partnerForID: model.partner(withID:)
+                            partnerForID: model.partner(withID:),
+                            photos: model.activePhotos,
+                            canAddPhoto: model.canAddPhoto,
+                            onAddPhoto: { takePhoto = true }
                         )
                         .sectionEntrance(appeared, index: 1)
                     } else {

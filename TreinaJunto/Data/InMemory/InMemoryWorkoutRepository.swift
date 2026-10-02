@@ -8,13 +8,14 @@ import Foundation
 /// sem ninguém dentro do treino.
 ///
 /// As regras continuam no domínio — aqui só se guarda.
-actor InMemoryWorkoutRepository: WorkoutRepository, InviteRepository {
+actor InMemoryWorkoutRepository: WorkoutRepository, InviteRepository, WorkoutPhotoRepository {
     /// Quem sou eu neste aparelho. Com autenticação de verdade vem da sessão.
     private let meID: UUID
     private var workouts: [UUID: Workout] = [:]
     private var invites: [UUID: WorkoutInvite] = [:]
     private var partners: [UUID: WorkoutPartner] = [:]
     private var inviteUses: [Date] = []
+    private var photosByWorkout: [UUID: [WorkoutPhoto]] = [:]
     private let invitesPerMonth: Int
 
     init(
@@ -22,13 +23,15 @@ actor InMemoryWorkoutRepository: WorkoutRepository, InviteRepository {
         invitesPerMonth: Int = 4,
         workouts: [Workout] = [],
         invites: [WorkoutInvite] = [],
-        partners: [WorkoutPartner] = SampleData.partners
+        partners: [WorkoutPartner] = SampleData.partners,
+        photos: [WorkoutPhoto] = []
     ) {
         self.meID = meID
         self.invitesPerMonth = invitesPerMonth
         self.workouts = Dictionary(uniqueKeysWithValues: workouts.map { ($0.id, $0) })
         self.invites = Dictionary(uniqueKeysWithValues: invites.map { ($0.id, $0) })
         self.partners = Dictionary(uniqueKeysWithValues: partners.map { ($0.id, $0) })
+        photosByWorkout = Dictionary(grouping: photos, by: \.workoutID)
     }
 
     // MARK: - Treinos
@@ -176,6 +179,26 @@ actor InMemoryWorkoutRepository: WorkoutRepository, InviteRepository {
         for id in inviteIDs {
             invites[id]?.markAcceptanceSeen()
         }
+    }
+
+    // MARK: - Fotos
+
+    @discardableResult
+    func addPhoto(_ jpegData: Data, to workoutID: UUID) async throws -> WorkoutPhoto {
+        guard !jpegData.isEmpty else { throw WorkoutPhotoError.emptyImage }
+        guard let workout = workouts[workoutID] else { throw WorkoutError.workoutNotFound }
+        guard workout.contains(meID) else { throw WorkoutPhotoError.notAParticipant }
+        guard workout.status == .started else { throw WorkoutPhotoError.workoutNotStarted }
+        let atuais = photosByWorkout[workoutID, default: []]
+        guard atuais.count < WorkoutPhoto.limitPerWorkout else { throw WorkoutPhotoError.limitReached }
+
+        let foto = WorkoutPhoto(workoutID: workoutID, authorID: meID, imageData: jpegData)
+        photosByWorkout[workoutID, default: []].append(foto)
+        return foto
+    }
+
+    func photos(in workoutID: UUID) async throws -> [WorkoutPhoto] {
+        photosByWorkout[workoutID, default: []]
     }
 
     // MARK: - Apoio

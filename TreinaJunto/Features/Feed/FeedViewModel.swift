@@ -16,13 +16,23 @@ final class FeedViewModel {
 
     var toastMessage: String?
 
-    private(set) var activeWorkout: Workout?
+    private(set) var activeWorkout: Workout? {
+        didSet {
+            if activeWorkout?.id != oldValue?.id {
+                activePhotos = []
+            }
+        }
+    }
+
+    /// As fotos do treino de pé, da mais antiga para a mais nova.
+    private(set) var activePhotos: [WorkoutPhoto] = []
     private(set) var inviteBalance = GymInviteBalance(perMonth: 0)
 
     private let partnerRepository: PartnerRepository
     private let inviteRepository: InviteRepository
     private let workoutRepository: WorkoutRepository
     private let chatRepository: ChatRepository
+    private let photoRepository: WorkoutPhotoRepository
     private let activity: WorkoutActivityPresenting
 
     init(
@@ -30,12 +40,14 @@ final class FeedViewModel {
         inviteRepository: InviteRepository,
         workoutRepository: WorkoutRepository,
         chatRepository: ChatRepository,
+        photoRepository: WorkoutPhotoRepository,
         activity: WorkoutActivityPresenting
     ) {
         self.partnerRepository = partnerRepository
         self.inviteRepository = inviteRepository
         self.workoutRepository = workoutRepository
         self.chatRepository = chatRepository
+        self.photoRepository = photoRepository
         self.activity = activity
     }
 
@@ -48,6 +60,7 @@ final class FeedViewModel {
             invites = try await pending
             activeWorkout = try await workoutRepository.activeWorkout()
             inviteBalance = try await workoutRepository.inviteBalance()
+            await loadPhotos()
             // Ao abrir o app: uma atividade perdida volta, uma sobrando some.
             syncActivity()
         } catch {
@@ -105,7 +118,41 @@ final class FeedViewModel {
     /// Recarrega o treino, para a tela mostrar quem entrou pela conversa.
     func refreshActiveWorkout() async {
         activeWorkout = try? await workoutRepository.activeWorkout()
+        await loadPhotos()
         syncActivity()
+    }
+
+    // MARK: - Fotos
+
+    /// Foto só durante o treino iniciado, e até o limite (§10.1). A tela
+    /// esconde o botão em vez de deixar tocar e recusar.
+    var canAddPhoto: Bool {
+        activeWorkout?.status == .started && activePhotos.count < WorkoutPhoto.limitPerWorkout
+    }
+
+    /// Registra uma foto já comprimida no treino de pé.
+    func addPhoto(_ jpegData: Data) async {
+        guard let workout = activeWorkout else { return }
+        do {
+            let foto = try await photoRepository.addPhoto(jpegData, to: workout.id)
+            activePhotos.append(foto)
+            syncActivity()
+            toast("Foto registrada no treino!")
+        } catch WorkoutPhotoError.limitReached {
+            toast("Este treino já tem \(WorkoutPhoto.limitPerWorkout) fotos.")
+        } catch WorkoutPhotoError.workoutNotStarted {
+            toast("Foto só depois de começar o treino.")
+        } catch {
+            toast("Não deu pra registrar a foto.")
+        }
+    }
+
+    private func loadPhotos() async {
+        guard let workout = activeWorkout else {
+            activePhotos = []
+            return
+        }
+        activePhotos = await (try? photoRepository.photos(in: workout.id)) ?? []
     }
 
     private func syncActivity() {

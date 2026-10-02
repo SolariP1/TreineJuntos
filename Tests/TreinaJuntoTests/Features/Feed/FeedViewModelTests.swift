@@ -29,6 +29,7 @@ struct FeedViewModelTests {
             inviteRepository: workouts,
             workoutRepository: workouts,
             chatRepository: chat,
+            photoRepository: workouts,
             activity: activity ?? NoWorkoutActivity()
         )
     }

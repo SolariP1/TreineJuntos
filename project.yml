@@ -28,6 +28,7 @@ targets:
         UILaunchScreen: {}
         # Live Activity do treino iniciado (docs/PRODUTO.md §9.4).
         NSSupportsLiveActivities: true
+        NSCameraUsageDescription: Para registrar fotos durante o treino.
         # Link de convite de grupo: treinajunto://grupo/<token>
         CFBundleURLTypes:
           - CFBundleURLName: com.lucasalmeida.treinajunto
