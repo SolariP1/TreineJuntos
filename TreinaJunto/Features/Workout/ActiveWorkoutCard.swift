@@ -14,6 +14,10 @@ struct ActiveWorkoutCard: View {
     var onInviteToSlot: () -> Void = {}
     /// Quem é cada participante, para mostrar o rosto na vaga.
     var partnerForID: (UUID) -> WorkoutPartner? = { _ in nil }
+    /// As fotos registradas, só depois de começar (docs/PRODUTO.md §10.1).
+    var photos: [WorkoutPhoto] = []
+    var canAddPhoto = false
+    var onAddPhoto: () -> Void = {}
 
     private var style: SportStyle {
         workout.sport.style
@@ -29,6 +33,10 @@ struct ActiveWorkoutCard: View {
             header
 
             slots
+
+            if workout.status == .started {
+                WorkoutPhotoStrip(photos: photos, canAdd: canAddPhoto, onAdd: onAddPhoto)
+            }
 
             HStack(spacing: 8) {
                 statusPill

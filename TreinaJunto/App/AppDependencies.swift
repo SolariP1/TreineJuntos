@@ -15,6 +15,8 @@ struct AppDependencies: Sendable {
     let invites: InviteRepository
     let profiles: ProfileRepository
     let workouts: WorkoutRepository
+    /// Mesmo ator dos treinos: quem manda foto depende de quem está no treino.
+    let photos: WorkoutPhotoRepository
     let chat: ChatRepository
     let session: SessionStore
     #if DEBUG
@@ -38,6 +40,7 @@ struct AppDependencies: Sendable {
         self.invites = invites ?? treinos
         self.profiles = profiles
         self.workouts = workouts ?? treinos
+        photos = (self.workouts as? WorkoutPhotoRepository) ?? treinos
         self.chat = chat
         #if DEBUG
             let treinosEmMemoria = self.workouts as? InMemoryWorkoutRepository

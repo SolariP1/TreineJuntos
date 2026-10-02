@@ -31,6 +31,7 @@ struct FeedLiveActivityTests {
             inviteRepository: workouts,
             workoutRepository: workouts,
             chatRepository: InMemoryChatRepository(),
+            photoRepository: workouts,
             activity: activity
         )
     }
