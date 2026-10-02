@@ -17,6 +17,7 @@ actor InMemoryChatRepository: ChatRepository {
     private var messagesByConversation: [UUID: [ChatMessage]] = [:]
     /// Um link valendo por grupo, pela chave do grupo.
     private var links: [UUID: GroupInviteLink] = [:]
+    private let partners: [UUID: WorkoutPartner]
 
     init(
         meID: UUID = SampleData.meID,
@@ -24,6 +25,7 @@ actor InMemoryChatRepository: ChatRepository {
         conversations: [Conversation] = [],
         messages: [ChatMessage] = [],
         links: [GroupInviteLink] = [],
+        partners: [WorkoutPartner] = SampleData.partners,
         now: @escaping @Sendable () -> Date = { Date() }
     ) {
         self.meID = meID
@@ -32,6 +34,7 @@ actor InMemoryChatRepository: ChatRepository {
         conversationsByID = Dictionary(uniqueKeysWithValues: conversations.map { ($0.id, $0) })
         messagesByConversation = Dictionary(grouping: messages, by: \.conversationID)
         self.links = Dictionary(uniqueKeysWithValues: links.map { ($0.conversationID, $0) })
+        self.partners = Dictionary(uniqueKeysWithValues: partners.map { ($0.id, $0) })
     }
 
     // MARK: - Curtida
@@ -68,6 +71,18 @@ actor InMemoryChatRepository: ChatRepository {
         conversationsByID.values
             .filter { $0.contains(meID) }
             .sorted { lastActivity(of: $0) > lastActivity(of: $1) }
+    }
+
+    func summaries() async throws -> [ConversationSummary] {
+        try await conversations().map { conversa in
+            ConversationSummary(
+                conversation: conversa,
+                // Quem não tem perfil conhecido some da lista em vez de
+                // aparecer sem nome.
+                others: conversa.memberIDs.filter { $0 != meID }.compactMap { partners[$0] },
+                lastMessage: messagesByConversation[conversa.id]?.last
+            )
+        }
     }
 
     func messages(in conversationID: UUID) async throws -> [ChatMessage] {
@@ -133,27 +148,50 @@ actor InMemoryChatRepository: ChatRepository {
         return link
     }
 
+    func currentInviteLink(for conversationID: UUID) async throws -> GroupInviteLink? {
+        _ = try myConversation(conversationID)
+        guard let link = links[conversationID], (try? link.validate(now: now())) != nil else {
+            return nil
+        }
+        return link
+    }
+
     func revokeInviteLink(for conversationID: UUID) async throws {
         let grupo = try myConversation(conversationID)
         guard grupo.createdBy == meID else { throw ConversationError.notGroupCreator }
         links[conversationID]?.revoke(now: now())
     }
 
+    func previewGroup(withToken token: String) async throws -> ConversationSummary {
+        let grupo = try group(forToken: token)
+        return ConversationSummary(
+            conversation: grupo,
+            others: grupo.memberIDs.filter { $0 != meID }.compactMap { partners[$0] },
+            // Quem ainda não entrou não lê o que foi dito antes.
+            lastMessage: nil
+        )
+    }
+
     @discardableResult
     func joinGroup(withToken token: String) async throws -> Conversation {
-        guard let link = links.values.first(where: { $0.token == token }) else {
-            throw ConversationError.linkNotFound
-        }
-        try link.validate(now: now())
-        guard var grupo = conversationsByID[link.conversationID] else {
-            throw ConversationError.conversationNotFound
-        }
+        var grupo = try group(forToken: token)
         try grupo.add(meID)
         conversationsByID[grupo.id] = grupo
         return grupo
     }
 
     // MARK: - Apoio
+
+    private func group(forToken token: String) throws -> Conversation {
+        guard let link = links.values.first(where: { $0.token == token }) else {
+            throw ConversationError.linkNotFound
+        }
+        try link.validate(now: now())
+        guard let grupo = conversationsByID[link.conversationID] else {
+            throw ConversationError.conversationNotFound
+        }
+        return grupo
+    }
 
     private func directConversation(with profileID: UUID) -> Conversation? {
         conversationsByID.values.first {
