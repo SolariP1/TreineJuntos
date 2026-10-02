@@ -116,6 +116,12 @@ struct ProfileView: View {
                     onLogout: onLogout
                 )
                 .sectionEntrance(appeared, index: 7)
+
+                #if DEBUG
+                    if let simulator = dependencies.simulator {
+                        DebugSimulatorCard(simulator: simulator)
+                    }
+                #endif
             }
             .padding(.horizontal, 18)
             .padding(.top, 8)
