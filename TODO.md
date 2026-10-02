@@ -1,6 +1,6 @@
 # Backlog — TreinaJunto
 
-Atualizado em 28/09/2026, sobre a v0.10.0 mais o PR #13.
+Atualizado em 01/10/2026, sobre a v0.13.0.
 
 **Como ler.** O que está em *Agora* é o caminho crítico: cada item destrava o
 seguinte. *Depende de você* são coisas que eu não consigo fazer sozinho.
@@ -23,6 +23,12 @@ Para não perder de vista o que existe.
 - [x] Saldo de convites que zera sozinho na virada do mês
 - [x] Abrir, iniciar e encerrar treino pela interface
 - [x] Aviso de quantos convites a party vai gastar, na hora de abrir
+- [x] Convite aponta para um treino, e aceitar põe a pessoa dentro (`v0.12.0`)
+- [x] Curtida mútua, aba Chat, grupos com link (`v0.13.0`)
+- [x] Convite pela vaga do treino, a partir da conversa (`v0.13.0`)
+- [x] Live Activity local: tela bloqueada e Dynamic Island (`v0.13.0`)
+- [x] Menu de debug para simular o outro lado (`v0.13.0`)
+- [x] 187 testes
 
 ---
 
@@ -35,10 +41,11 @@ Em ordem. Cada um destrava o próximo.
 Hoje o 👋 no card manda um convite que não leva a lugar nenhum: ele guarda um
 `Set<UUID>` e mostra um toast. **Nada conecta duas pessoas.**
 
-- [ ] O 👋 passa a convidar a pessoa para o **meu treino aberto**
-- [ ] Aceitar um convite **põe a pessoa dentro do treino**
+- [x] ~~O 👋 passa a convidar a pessoa para o **meu treino aberto**~~ —
+      substituído pelo convite pela vaga (§9)
+- [x] Aceitar um convite **põe a pessoa dentro do treino**
 - [ ] O Feed mostra treinos abertos de quem está perto, não só pessoas
-- [ ] Sair de um treino antes de começar
+- [x] Sair de um treino antes de começar
 
 **Por que primeiro:** sem isso, party, presença, avaliação e confiabilidade
 não têm como existir. É a peça que falta para o app fazer o que promete.
@@ -49,17 +56,20 @@ não têm como existir. É a peça que falta para o app fazer o que promete.
       passando pra frente quando houver mais de um
 - [ ] Marcar cada aceite como visto — ninguém vê a mesma novidade duas vezes
 - [ ] Faixa discreta, e não modal, quando o aceite chega com o app aberto
-- [ ] **Chat**: a aba deixa de ser placeholder e lista as conversas
+- [x] **Chat**: a aba deixa de ser placeholder e lista as conversas
 - [ ] "Conversar" leva direto à conversa certa
 
 > **Revisto em 01/10:** a conversa é **por pessoa e por grupo**, e o convite
 > para treino sai dela ([PRODUTO.md §9](docs/PRODUTO.md)).
 
-- [ ] Curtida mútua abre conversa privada (o 👋 vira curtir)
-- [ ] **Criar grupo**: chamar das minhas conversas ou por link que expira
-- [ ] Vagas do treino como círculos **+**, com "Falta X pessoa(s)"
-- [ ] Tocar na vaga → escolher conversa → convite vira mensagem com Aceitar
-- [ ] Quem aceita ocupa a vaga com a foto; treino cheio fecha os convites
+- [x] Curtida mútua abre conversa privada (o 👋 vira curtir)
+- [x] **Criar grupo**: chamar das minhas conversas ou por link que expira
+- [x] Vagas do treino como círculos **+**, com "Falta X pessoa(s)"
+- [x] Tocar na vaga → escolher conversa → convite vira mensagem com Aceitar
+- [x] Quem aceita ocupa a vaga com a foto; treino cheio fecha os convites
+- [ ] Decisões em aberto do [PRODUTO.md §9.7](docs/PRODUTO.md): começar com
+      vaga sobrando, fotos na party, validade do link, tamanho de grupo,
+      desfazer curtida
 
 ### 3. Confirmar presença
 
@@ -82,9 +92,10 @@ vazia.
 
 ### 5. Live Activity
 
-- [ ] Target de **Widget Extension** (não roda no target principal)
-- [ ] Treino iniciado aparece no topo da tela e na Dynamic Island
-- [ ] Tempo com `Text(timerInterval:)` a partir de `startedAt`, sem push
+- [x] Target de **Widget Extension** (não roda no target principal)
+- [x] Treino iniciado aparece no topo da tela e na Dynamic Island
+- [x] Tempo com `Text(timerInterval:)` a partir de `startedAt`, sem push
+- [ ] **Encerrar pela Dynamic Island**, com `LiveActivityIntent`
 - [ ] **Push-to-start** para subir nos celulares dos convidados
       (exige iOS 17.2, o alvo hoje é 17.0, ver [PRODUTO.md §9.4](docs/PRODUTO.md))
 - [ ] Atualização por **APNs** quando algo muda com o app fechado
@@ -159,8 +170,7 @@ Depois disso eu faço:
 
 ## Defeitos conhecidos
 
-- [ ] **O toast nunca aparece.** `padding(.bottom, 12)` contra uma tab bar
-      flutuante de ~90pt. Nenhuma confirmação de ação chega ao usuário hoje.
+- [x] **O toast nunca aparece.** Corrigido na `v0.12.0`.
 - [ ] **Duas fontes de verdade para o perfil.** `FeedGreeting` cumprimenta
       "Lucas" e mostra "L" em literais, enquanto o Perfil lê do repositório.
       Editar o nome não muda a saudação.
